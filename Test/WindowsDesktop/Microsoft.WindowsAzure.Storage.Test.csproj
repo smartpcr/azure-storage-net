@@ -37,8 +37,21 @@
     <NoWarn>1685</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FiddlerCore">
-      <HintPath>..\FaultInjection\Dependencies\DotNet2\FiddlerCore.dll</HintPath>
+    <Reference Include="BasicFormatsForCore, Version=2.6.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\FiddlerCore.4.6.2.0\lib\net40\BasicFormatsForCore.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="BCMakeCert, Version=2.0.7.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\FiddlerCore.4.6.2.0\lib\net40\BCMakeCert.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="CertMaker, Version=4.5.0.1, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\FiddlerCore.4.6.2.0\lib\net40\CertMaker.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FiddlerCore4, Version=4.6.2.0, Culture=neutral, PublicKeyToken=67cb91587178ac5a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\FiddlerCore.4.6.2.0\lib\net40\FiddlerCore4.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Hyak.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
