@@ -10,21 +10,17 @@
     },
 
     "frameworks": {
-        "dnx451": {
-            "frameworkAssemblies": {
-                "System.Runtime": "",
-                "System.Xml.Linq": ""
-            }
-        },
         "dnxcore50": {
             "dependencies": {
-              "System.Runtime": "4.0.10-beta-*"
+              "System.Runtime": "4.0.20-beta-*"
             }
         }
     },
 
 	"compilationOptions": {
-		"define": [ "XUNIT" ]
+		"define": [ "XUNIT" ],
+		"delaySign": true,
+        "keyFile":  "MSSharedLibKey.snk"
 	}
 
 }

@@ -28,6 +28,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
     using System.Net;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Threading.Tasks;
 
     [TestClass]
     public class TableEntityEncryptionTests : TableTestBase
@@ -420,6 +421,48 @@ namespace Microsoft.WindowsAzure.Storage.Table
                 Assert.AreEqual(ent.C, "c");
                 Assert.IsNull(ent.D);
                 Assert.AreEqual(ent.E, 0);
+            }
+        }
+
+        [TestMethod]
+        [Description("Checks to ensure that when querying with encryption, if we don't request any specific columns, we get all the data back.")]
+        [TestCategory(ComponentCategory.Table)]
+        [TestCategory(TestTypeCategory.UnitTest)]
+        [TestCategory(SmokeTestCategory.NonSmoke)]
+        [TestCategory(TenantTypeCategory.DevStore), TestCategory(TenantTypeCategory.DevFabric), TestCategory(TenantTypeCategory.Cloud)]
+        public void TableQueryProjectionEncryptionNoSelect()
+        {
+            // Insert Entity
+            EncryptedBaseEntity ent1 = new EncryptedBaseEntity() { PartitionKey = Guid.NewGuid().ToString(), RowKey = DateTime.Now.Ticks.ToString() };
+            ent1.Populate();
+
+            EncryptedBaseEntity ent2 = new EncryptedBaseEntity() { PartitionKey = Guid.NewGuid().ToString(), RowKey = DateTime.Now.Ticks.ToString() };
+            ent2.Populate();
+
+            // Create the Key to be used for wrapping.
+            SymmetricKey aesKey = new SymmetricKey("symencryptionkey");
+
+            TableRequestOptions options = new TableRequestOptions() { EncryptionPolicy = new TableEncryptionPolicy(aesKey, null) };
+            currentTable.Execute(TableOperation.Insert(ent1), options, null);
+            currentTable.Execute(TableOperation.Insert(ent2), options, null);
+
+            tableClient.DefaultRequestOptions.PayloadFormat = TablePayloadFormat.Json;
+
+            // Create the resolver to be used for unwrapping.
+            DictionaryKeyResolver resolver = new DictionaryKeyResolver();
+            resolver.Add(aesKey);
+            TableEncryptionPolicy encryptionPolicy = new TableEncryptionPolicy(null, resolver);
+
+            IEnumerable<EncryptedBaseEntity> entities = null;
+            CloudTableClient encryptingTableClient = new CloudTableClient(this.tableClient.StorageUri, this.tableClient.Credentials);
+            encryptingTableClient.DefaultRequestOptions.EncryptionPolicy = encryptionPolicy;
+            encryptingTableClient.DefaultRequestOptions.RequireEncryption = true;
+
+            entities = encryptingTableClient.GetTableReference(currentTable.Name).CreateQuery<EncryptedBaseEntity>().Select(ent => ent);
+
+            foreach (EncryptedBaseEntity ent in entities)
+            {
+                ent.Validate();
             }
         }
 
@@ -1090,6 +1133,121 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TestHelper.ExpectedException<StorageException>(
                 () => currentTable.ExecuteQuery(query, options).ToList(),
                 "All entities retrieved should be encrypted when RequireEncryption is set to true.");
+        }
+
+        [TestMethod]
+        [Description("Test that sync table operations that should not get encrypted still function properly if you supply an encryption policy.")]
+        [TestCategory(ComponentCategory.Table)]
+        [TestCategory(TestTypeCategory.UnitTest)]
+        [TestCategory(SmokeTestCategory.NonSmoke)]
+        [TestCategory(TenantTypeCategory.DevStore), TestCategory(TenantTypeCategory.DevFabric), TestCategory(TenantTypeCategory.Cloud)]
+        public void TableOperationsIgnoreEncryption()
+        {
+            SymmetricKey aesKey = new SymmetricKey("symencryptionkey");
+            TableRequestOptions options = new TableRequestOptions() { EncryptionPolicy = new TableEncryptionPolicy(aesKey, null), RequireEncryption = true};
+
+            CloudTable testTable = this.tableClient.GetTableReference(GenerateRandomTableName());
+
+            try
+            {
+                // Check Create()
+                testTable.Create(options, null);
+                Assert.IsTrue(testTable.Exists(), "Table failed to be created when encryption policy was supplied.");
+
+                // Check Exists()
+                Assert.IsTrue(testTable.Exists(options, null), "Table.Exists() failed when encryption policy was supplied.");
+
+                // Check ListTables().  ListTables() does not call ListTablesSegmented(), so we need to check both.
+                Assert.AreEqual(testTable.Name, this.tableClient.ListTables(testTable.Name, options, null).First().Name, "ListTables failed when an encryption policy was specified.");
+                Assert.AreEqual(testTable.Name, this.ListAllTables(this.tableClient, testTable.Name, options).First().Name, "ListTables failed when an encryption policy was specified.");
+
+                // Check Get and Set Permissions
+                TablePermissions permissions = testTable.GetPermissions();
+                string policyName = "samplePolicy";
+                permissions.SharedAccessPolicies.Add(policyName, new SharedAccessTablePolicy() {Permissions = SharedAccessTablePermissions.Query, SharedAccessExpiryTime = DateTime.Now + TimeSpan.FromDays(1)});
+                testTable.SetPermissions(permissions, options, null);
+                Assert.AreEqual(policyName, testTable.GetPermissions().SharedAccessPolicies.First().Key);
+                Assert.AreEqual(policyName, testTable.GetPermissions(options, null).SharedAccessPolicies.First().Key);
+
+                // Check Delete
+                testTable.Delete(options, null);
+                Assert.IsFalse(testTable.Exists());
+            }
+            finally
+            {
+                testTable.DeleteIfExists();
+            }
+        }
+
+        [TestMethod]
+        [Description("Test that async table operations that should not get encrypted still function properly if you supply an encryption policy.")]
+        [TestCategory(ComponentCategory.Table)]
+        [TestCategory(TestTypeCategory.UnitTest)]
+        [TestCategory(SmokeTestCategory.NonSmoke)]
+        [TestCategory(TenantTypeCategory.DevStore), TestCategory(TenantTypeCategory.DevFabric), TestCategory(TenantTypeCategory.Cloud)]
+        public void TableOperationsIgnoreEncryptionAsync()
+        {
+            SymmetricKey aesKey = new SymmetricKey("symencryptionkey");
+            TableRequestOptions options = new TableRequestOptions() { EncryptionPolicy = new TableEncryptionPolicy(aesKey, null), RequireEncryption = true };
+
+            CloudTable testTable = this.tableClient.GetTableReference(GenerateRandomTableName());
+
+            try
+            {
+                // Check Create()
+                testTable.CreateAsync(options, null).Wait();
+                Assert.IsTrue(testTable.Exists(), "Table failed to be created when encryption policy was supplied.");
+
+                // Check Exists()
+                Assert.IsTrue(testTable.ExistsAsync(options, null).Result, "Table.Exists() failed when encryption policy was supplied.");
+
+                // Check ListTables().
+                Assert.AreEqual(testTable.Name, this.ListAllTablesAsync(this.tableClient, testTable.Name, options).Result.First().Name, "ListTables failed when an encryption policy was specified.");
+
+                // Check Get and Set Permissions
+                TablePermissions permissions = testTable.GetPermissions();
+                string policyName = "samplePolicy";
+                permissions.SharedAccessPolicies.Add(policyName, new SharedAccessTablePolicy() { Permissions = SharedAccessTablePermissions.Query, SharedAccessExpiryTime = DateTime.Now + TimeSpan.FromDays(1) });
+                testTable.SetPermissionsAsync(permissions, options, null).Wait();
+                Assert.AreEqual(policyName, testTable.GetPermissions().SharedAccessPolicies.First().Key);
+                Assert.AreEqual(policyName, testTable.GetPermissionsAsync(options, null).Result.SharedAccessPolicies.First().Key);
+
+                // Check Delete
+                testTable.DeleteAsync(options, null).Wait();
+                Assert.IsFalse(testTable.Exists());
+            }
+            finally
+            {
+                testTable.DeleteIfExists();
+            }
+        }
+
+        private List<CloudTable> ListAllTables(CloudTableClient tableClient, string prefix, TableRequestOptions options)
+        {
+            TableContinuationToken token = null;
+            List<CloudTable> tables = new List<CloudTable>();
+            do
+            {
+                TableResultSegment resultSegment = tableClient.ListTablesSegmented(prefix, null /* maxResults*/, token, options, null);
+                tables.AddRange(resultSegment.Results);
+                token = resultSegment.ContinuationToken;
+            } while (token != null);
+
+            return tables;
+        }
+
+        private async Task<List<CloudTable>> ListAllTablesAsync(CloudTableClient tableClient, string prefix, TableRequestOptions options)
+        {
+            TableContinuationToken token = null;
+            List<CloudTable> tables = new List<CloudTable>();
+            do
+            {
+                TableResultSegment resultSegment = await tableClient.ListTablesSegmentedAsync(prefix, null /* maxResults*/, token, options, null);
+                tables.AddRange(resultSegment.Results);
+                token = resultSegment.ContinuationToken;
+            } while (token != null);
+
+            return tables;
         }
 
         private static DynamicTableEntity GenerateRandomEntity(string pk)
