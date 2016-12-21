@@ -15,7 +15,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-#if !ASPNET_K
+#if !NETCORE
 namespace Microsoft.WindowsAzure.Storage.File
 {
     using System;
@@ -29,7 +29,7 @@ namespace Microsoft.WindowsAzure.Storage.File
     /// This class implements IRandomAccessStream and acts like a proxy between
     /// the caller and the actual Stream implementation.
     /// </summary>
-    internal class FileWriteStreamHelper : ICloudFileStream
+    internal class FileWriteStreamHelper
     {
         private FileWriteStream originalStream;
         private IOutputStream originalStreamAsOutputStream;

@@ -82,12 +82,6 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
         public static readonly TimeSpan DefaultClientSideTimeout = TimeSpan.FromMinutes(5);
 
         /// <summary>
-        /// Default server side timeout for all service clients.
-        /// </summary>
-        [Obsolete("Server-side timeout is not required by default.")]
-        public static readonly TimeSpan DefaultServerSideTimeout = TimeSpan.FromSeconds(90);
-
-        /// <summary>
         /// Maximum Retry Policy back-off
         /// </summary>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Backoff", Justification = "Reviewed")]
@@ -209,6 +203,11 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
         public const string PageRangeElement = "PageRange";
 
         /// <summary>
+        /// XML element for clear ranges.
+        /// </summary>
+        public const string ClearRangeElement = "ClearRange";
+
+        /// <summary>
         /// XML element for page list elements.
         /// </summary>
         public const string PageListElement = "PageList";
@@ -322,6 +321,11 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
         /// XML element for the last modified date.
         /// </summary>
         public const string LastModifiedElement = "Last-Modified";
+
+        /// <summary>
+        /// XML element for the server encryption status.
+        /// </summary>
+        public const string ServerEncryptionElement = "ServerEncrypted";
 
         /// <summary>
         /// XML element for the Url.
@@ -699,11 +703,6 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
         internal const string XMLAcceptHeaderValue = "application/xml";
 
         /// <summary>
-        /// Header value to set Accept to AtomPub.
-        /// </summary>
-        internal const string AtomAcceptHeaderValue = "application/atom+xml,application/atomsvc+xml,application/xml";
-
-        /// <summary>
         /// Header value to set Accept to JsonLight.
         /// </summary>
         internal const string JsonLightAcceptHeaderValue = "application/json;odata=minimalmetadata";
@@ -722,10 +721,6 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
         /// Header value argument to set JSON no metadata.
         /// </summary>
         internal const string NoMetadata = "odata=nometadata";
-        /// <summary>
-        /// Header value to set Content-Type to AtomPub.
-        /// </summary>
-        internal const string AtomContentTypeHeaderValue = "application/atom+xml";
 
         /// <summary>
         /// Header value to set Content-Type to JSON.
@@ -752,10 +747,8 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
                 UserAgentComment = "(Windows Runtime Phone)";
 #elif WINDOWS_RT
                 UserAgentComment = "(Windows Runtime)";
-#elif ASPNET_K
-                UserAgentComment = "(ASP.NET Core 5.0)";
-#elif PORTABLE
-                UserAgentComment = "(Portable Class Library)";
+#elif NETCORE
+                UserAgentComment = "(.NET Core)";
 #else
                 UserAgentComment = string.Format(CultureInfo.InvariantCulture, "(.NET CLR {0}; {1} {2})", Environment.Version, Environment.OSVersion.Platform, Environment.OSVersion.Version);
 #endif
@@ -776,19 +769,15 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
             /// <summary>
             /// Specifies the value to use for UserAgent header.
             /// </summary>
-            public const string UserAgentProductName = "WA-Storage";
+            public const string UserAgentProductName = "Azure-Storage";
 
             /// <summary>
             /// Specifies the value to use for UserAgent header.
             /// </summary>
-#if ASPNET_K || PORTABLE
-            public const string UserAgentProductVersion = "6.2.2-preview";
-#else
-            public const string UserAgentProductVersion = "6.2.2";
-#endif 
+            public const string UserAgentProductVersion = "7.2.1";
 
             /// <summary>
-            /// Master Windows Azure Storage header prefix.
+            /// Master Microsoft Azure Storage header prefix.
             /// </summary>
             public const string PrefixForStorageHeader = "x-ms-";
 
@@ -831,6 +820,16 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
             /// Header that specifies the ETag value for the resource.
             /// </summary>
             public const string EtagHeader = "ETag";
+
+            /// <summary>
+            /// Header that specifies if a resourse is fully encrypted server-side.
+            /// </summary>
+            public const string ServerEncrypted = PrefixForStorageHeader + "server-encrypted";
+
+            /// <summary>
+            /// Header that acknowledges the data used for write operation is encrypted server-side.
+            /// </summary>
+            public const string ServerRequestEncrypted = PrefixForStorageHeader + "request-server-encrypted";
 
             /// <summary>
             /// Header for data ranges.
@@ -1066,7 +1065,7 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
             /// Current storage version header value.
             /// Every time this version changes, assembly version needs to be updated as well.
             /// </summary>
-            public const string TargetStorageVersion = "2015-04-05";
+            public const string TargetStorageVersion = "2015-12-11";
 
             /// <summary>
             /// Specifies the file type.
@@ -1594,6 +1593,16 @@ namespace Microsoft.WindowsAzure.Storage.Shared.Protocol
             /// Additional property name to store the encryption metadata.
             /// </summary>
             public const string TableEncryptionPropertyDetails = "_ClientEncryptionMetadata2";
+
+            /// <summary>
+            /// Key for the encryption agent
+            /// </summary>
+            public const string AgentMetadataKey = "EncryptionLibrary";
+
+            /// <summary>
+            /// Value for the encryption agent
+            /// </summary>
+            public const string AgentMetadataValue = ".NET " + Constants.HeaderConstants.UserAgentProductVersion;
         }
     }
 }

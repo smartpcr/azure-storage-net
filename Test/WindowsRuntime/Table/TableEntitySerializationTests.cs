@@ -19,7 +19,7 @@ using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 using Microsoft.WindowsAzure.Storage.Table.Entities;
 using System;
 
-#if ASPNET_K
+#if NETCORE
 using System.Threading.Tasks;
 #endif
 
@@ -88,7 +88,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
         {
             CloudTableClient tableClient = GenerateCloudTableClient();
             currentTable = tableClient.GetTableReference(GenerateRandomTableName());
-            currentTable.CreateIfNotExistsAsync().AsTask().Wait();
+            currentTable.CreateIfNotExistsAsync().Wait();
 
             if (TestBase.TableBufferManager != null)
             {
@@ -101,7 +101,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
         [TestCleanup()]
         public void MyTestCleanup()
         {
-            currentTable.DeleteIfExistsAsync().AsTask().Wait();
+            currentTable.DeleteIfExistsAsync().Wait();
 
             if (TestBase.TableBufferManager != null)
             {
@@ -123,6 +123,18 @@ namespace Microsoft.WindowsAzure.Storage.Table
             ComplexEntity secondEnt = new ComplexEntity();
             secondEnt.ReadEntity(ent.WriteEntity(null), null);
             ComplexEntity.AssertEquality(ent, secondEnt);
+        }
+
+        [TestMethod]
+        [Description("A test checking the reflection based property list")]
+        [TestCategory(ComponentCategory.Table)]
+        [TestCategory(TestTypeCategory.UnitTest)]
+        [TestCategory(SmokeTestCategory.NonSmoke)]
+        [TestCategory(TenantTypeCategory.DevStore), TestCategory(TenantTypeCategory.DevFabric), TestCategory(TenantTypeCategory.Cloud)]
+        public void ReflectionBasedEntityPropertyTest()
+        {
+            DerivedComplexEntity ent = new DerivedComplexEntity();
+            DerivedComplexEntity.AssertProperties(ent);
         }
 
         [TestMethod]

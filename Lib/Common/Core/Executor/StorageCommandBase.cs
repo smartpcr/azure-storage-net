@@ -25,7 +25,7 @@ namespace Microsoft.WindowsAzure.Storage.Core.Executor
     using System.IO;
     using System.Net;
 
-#if WINDOWS_RT || ASPNET_K || PORTABLE
+#if WINDOWS_RT || NETCORE
     using System.Net.Http;
 #endif
 
@@ -65,14 +65,10 @@ namespace Microsoft.WindowsAzure.Storage.Core.Executor
             get { return this.requestResults; }
         }
 
-#if WINDOWS_RT || ASPNET_K || PORTABLE
-        public HttpClientHandler Handler = null;
-#endif
-
         // Delegate that will be executed in the event of an Exception after signing.
         public Action<StorageCommandBase<T>, Exception, OperationContext> RecoveryAction = null;
 
-#if WINDOWS_RT || ASPNET_K || PORTABLE
+#if WINDOWS_RT || NETCORE
         public Func<Stream, HttpResponseMessage, string, StorageExtendedErrorInformation> ParseError = null;
 #else
         // Delegate that will be executed in the event of a failure.

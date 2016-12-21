@@ -29,9 +29,9 @@ namespace Microsoft.WindowsAzure.Storage.File
     using System.Globalization;
 
     /// <summary>
-    /// Represents a Windows Azure File.
+    /// Represents a Microsoft Azure File.
     /// </summary>
-    public sealed partial class CloudFile : IListFileItem
+    public partial class CloudFile : IListFileItem
     {
         /// <summary>
         /// Default is 4 MB.
@@ -67,17 +67,7 @@ namespace Microsoft.WindowsAzure.Storage.File
         /// </summary>
         /// <param name="fileAbsoluteUri">The absolute URI to the file.</param>
         /// <param name="credentials">A <see cref="StorageCredentials"/> object.</param>
-#if WINDOWS_RT
-        /// <returns>A <see cref="CloudFile"/> object.</returns>
-        public static CloudFile Create(StorageUri fileAbsoluteUri, StorageCredentials credentials)
-        {
-            return new CloudFile(fileAbsoluteUri, credentials);
-        }
-
-        internal CloudFile(StorageUri fileAbsoluteUri, StorageCredentials credentials)
-#else
         public CloudFile(StorageUri fileAbsoluteUri, StorageCredentials credentials)
-#endif
         {
             this.attributes = new CloudFileAttributes();
             this.ParseQueryAndVerify(fileAbsoluteUri, credentials);

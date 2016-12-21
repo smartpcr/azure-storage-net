@@ -22,7 +22,7 @@ using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 
-#if ASPNET_K
+#if NETCORE
 using Microsoft.WindowsAzure.Storage.Test.Extensions;
 using System.Security.Cryptography;
 #else
@@ -70,7 +70,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteAsync().AsTask().Wait();
+                share.DeleteAsync().Wait();
             }
         }
 
@@ -174,7 +174,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteAsync().AsTask().Wait();
+                share.DeleteAsync().Wait();
             }
         }
         */
@@ -189,7 +189,7 @@ namespace Microsoft.WindowsAzure.Storage.File
         {
             byte[] buffer = GetRandomBuffer(6 * 512);
 
-#if ASPNET_K
+#if NETCORE
             MD5 hasher = MD5.Create();
 #else
             CryptographicHash hasher = HashAlgorithmProvider.OpenAlgorithm("MD5").CreateHash();
@@ -212,14 +212,14 @@ namespace Microsoft.WindowsAzure.Storage.File
                     };
                     using (var writeStream = await file.OpenWriteAsync(buffer.Length * 3, null, options, null))
                     {
-                        Stream fileStream = writeStream.AsStreamForWrite();
+                        Stream fileStream = writeStream;
 
                         for (int i = 0; i < 3; i++)
                         {
                             await fileStream.WriteAsync(buffer, 0, buffer.Length);
                             await wholeFile.WriteAsync(buffer, 0, buffer.Length);
                             Assert.AreEqual(wholeFile.Position, fileStream.Position);
-#if !ASPNET_K
+#if !NETCORE
                             hasher.Append(buffer.AsBuffer());
 #endif
                         }
@@ -227,7 +227,7 @@ namespace Microsoft.WindowsAzure.Storage.File
                         await fileStream.FlushAsync();
                     }
 
-#if ASPNET_K
+#if NETCORE
                     string md5 = Convert.ToBase64String(hasher.ComputeHash(wholeFile.ToArray()));
 #else
                     string md5 = CryptographicBuffer.EncodeToBase64String(hasher.GetValueAndReset());
@@ -247,7 +247,7 @@ namespace Microsoft.WindowsAzure.Storage.File
 
                     using (var writeStream = await file.OpenWriteAsync(null))
                     {
-                        Stream fileStream = writeStream.AsStreamForWrite();
+                        Stream fileStream = writeStream;
                         fileStream.Seek(buffer.Length / 2, SeekOrigin.Begin);
                         wholeFile.Seek(buffer.Length / 2, SeekOrigin.Begin);
 
@@ -274,7 +274,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteAsync().AsTask().Wait();
+                share.DeleteAsync().Wait();
             }
         }
 
@@ -299,7 +299,7 @@ namespace Microsoft.WindowsAzure.Storage.File
                 {
                     using (var writeStream = await file.OpenWriteAsync(buffer.Length))
                     {
-                        Stream fileStream = writeStream.AsStreamForWrite();
+                        Stream fileStream = writeStream;
                         await fileStream.WriteAsync(buffer, 0, buffer.Length);
                         await wholeFile.WriteAsync(buffer, 0, buffer.Length);
                         Random random = new Random();
@@ -326,7 +326,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -355,11 +355,11 @@ namespace Microsoft.WindowsAzure.Storage.File
                     {
                         for (int i = 0; i < 3; i++)
                         {
-                            await fileStream.WriteAsync(buffer.AsBuffer());
+                            await fileStream.WriteAsync(buffer, 0, buffer.Length);
                             await wholeFile.WriteAsync(buffer, 0, buffer.Length);
                         }
 
-#if ASPNET_K
+#if NETCORE
                         // todo: Make some other better logic for this test to be reliable.
                         System.Threading.Thread.Sleep(500);
 #endif
@@ -374,7 +374,7 @@ namespace Microsoft.WindowsAzure.Storage.File
 
                         Assert.AreEqual(3, opContext.RequestResults.Count);
 
-                        await fileStream.WriteAsync(buffer.AsBuffer());
+                        await fileStream.WriteAsync(buffer, 0, buffer.Length);
                         await wholeFile.WriteAsync(buffer, 0, buffer.Length);
 
                         Assert.AreEqual(3, opContext.RequestResults.Count);
@@ -395,7 +395,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
     }

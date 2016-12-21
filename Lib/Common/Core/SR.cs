@@ -30,6 +30,8 @@ namespace Microsoft.WindowsAzure.Storage.Core
         public const string ArgumentTooSmallError = "The argument '{0}' is smaller than minimum of '{1}'";
         public const string AttemptedEdmTypeForTheProperty = "Attempting to deserialize '{0}' as type '{1}'";
         public const string BatchWithRetreiveContainsOtherOperations = "A batch transaction with a retrieve operation cannot contain any other operations.";
+        public const string BatchExceededMaximumNumberOfOperations = "The maximum number of operations allowed in one batch has been exceeded.";
+        public const string BatchOperationRequiresPartitionKeyRowKey = "A batch non-retrieve operation requires a non-null partition key and row key.";
         public const string BatchErrorInOperation = "Element {0} in the batch returned an unexpected response code.";
         public const string BinaryMessageShouldUseBase64Encoding = "EncodeMessage should be true for binary message.";
         public const string Blob = "blob";
@@ -83,6 +85,7 @@ namespace Microsoft.WindowsAzure.Storage.Core
         public const string FileStreamFlushPending = "File stream has a pending flush operation. Please call EndFlush first.";
         public const string FileStreamReadPending = "File stream has a pending read operation. Please call EndRead first.";
         public const string FailParseProperty = "Failed to parse property '{0}' with value '{1}' as type '{2}'";
+        public const string GetServiceStatsInvalidOperation = "GetServiceStats cannot be run with a 'PrimaryOnly' location mode.";
         public const string IncorrectNumberOfBytes = "Incorrect number of bytes received. Expected '{0}', received '{1}'";
         public const string InternalStorageError = "Unexpected internal storage client error.";
         public const string InvalidAclType = "Invalid acl public access type returned '{0}'. Expected blob or container.";
@@ -104,6 +107,7 @@ namespace Microsoft.WindowsAzure.Storage.Core
         public const string InvalidMetricsLevel = "Invalid metrics level specified.";
         public const string InvalidBlockSize = "Append block data should not exceed the maximum blob size condition value.";
         public const string InvalidPageSize = "Page data must be a multiple of 512 bytes.";
+        public const string InvalidProtocolsInSAS = "Invalid value {0} for the SharedAccessProtocol parameter when creating a SharedAccessSignature.  Use 'null' if you do not wish to include a SharedAccessProtocol.";
         public const string InvalidResourceName = "Invalid {0} name. Check MSDN for more information about valid {0} naming.";
         public const string InvalidResourceNameLength = "Invalid {0} name length. The {0} name must be between {1} and {2} characters long.";
         public const string InvalidResourceReservedName = "Invalid {0} name. This {0} name is reserved.";
@@ -168,6 +172,7 @@ namespace Microsoft.WindowsAzure.Storage.Core
         public const string ResourceNameEmpty = "Invalid {0} name. The {0} name may not be null, empty, or whitespace only.";
         public const string RetrieveWithContinuationToken = "Retrieved '{0}' results with continuation token '{1}'.";
         public const string SecondaryOnlyCommand = "This operation can only be executed against the secondary storage location.";
+        public const string SetServicePropertiesRequiresNonNullSettings = "At least one service property needs to be non-null for SetServiceProperties API.";
         public const string Share = "share";
         public const string StartTimeExceedsEndTime = "StartTime invalid. The start time '{0}' occurs after the end time '{1}'.";
         public const string StorageUriMissingLocation = "The Uri for the target storage location is not specified. Please consider changing the request's location mode.";
@@ -235,11 +240,7 @@ namespace Microsoft.WindowsAzure.Storage.Core
 
 #if WINDOWS_PHONE && WINDOWS_DESKTOP
         public const string WindowsPhoneDoesNotSupportMD5 = "MD5 is not supported on Windows Phone";
-#elif PORTABLE
-        public const string PortableDoesNotSupportMD5 = "MD5 is not supported using the PCL.";
-        public const string PortableDoesNotSupportSharedKey = "Shared Key is not supported using the PCL. Please use a SAS token.";
 #endif
-
         // Table IQueryable Exception messages
         public const string ALinqCouldNotConvert = "Could not convert constant {0} expression to string.";
         public const string ALinqMethodNotSupported = "The method '{0}' is not supported.";

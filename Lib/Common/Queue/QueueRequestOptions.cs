@@ -35,6 +35,21 @@ namespace Microsoft.WindowsAzure.Storage.Queue
         private TimeSpan? maximumExecutionTime;
 
         /// <summary>
+        /// Defines the absolute default option values, should neither the user nor client specify anything.
+        /// </summary>
+        internal static QueueRequestOptions BaseDefaultRequestOptions = new QueueRequestOptions()
+        {
+            RetryPolicy = new NoRetry(),
+#if !(WINDOWS_RT || NETCORE)
+            EncryptionPolicy = null,
+            RequireEncryption = null,
+#endif
+            LocationMode = RetryPolicies.LocationMode.PrimaryOnly,
+            ServerTimeout = null,
+            MaximumExecutionTime = null
+        };
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="QueueRequestOptions"/> class.
         /// </summary>
         public QueueRequestOptions()
@@ -51,7 +66,7 @@ namespace Microsoft.WindowsAzure.Storage.Queue
             if (other != null)
             {
                 this.RetryPolicy = other.RetryPolicy;
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT || NETCORE)
                 this.EncryptionPolicy = other.EncryptionPolicy;
                 this.RequireEncryption = other.RequireEncryption;
 #endif
@@ -65,17 +80,38 @@ namespace Microsoft.WindowsAzure.Storage.Queue
         internal static QueueRequestOptions ApplyDefaults(QueueRequestOptions options, CloudQueueClient serviceClient)
         {
             QueueRequestOptions modifiedOptions = new QueueRequestOptions(options);
-            
-            modifiedOptions.RetryPolicy = modifiedOptions.RetryPolicy ?? serviceClient.DefaultRequestOptions.RetryPolicy;
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
-            modifiedOptions.EncryptionPolicy = modifiedOptions.EncryptionPolicy ?? serviceClient.DefaultRequestOptions.EncryptionPolicy;
-            modifiedOptions.RequireEncryption = modifiedOptions.RequireEncryption ?? serviceClient.DefaultRequestOptions.RequireEncryption;
+
+            modifiedOptions.RetryPolicy = 
+                modifiedOptions.RetryPolicy 
+                ?? serviceClient.DefaultRequestOptions.RetryPolicy 
+                ?? BaseDefaultRequestOptions.RetryPolicy;
+
+#if !(WINDOWS_RT || NETCORE)
+            modifiedOptions.EncryptionPolicy = 
+                modifiedOptions.EncryptionPolicy 
+                ?? serviceClient.DefaultRequestOptions.EncryptionPolicy 
+                ?? BaseDefaultRequestOptions.EncryptionPolicy;
+
+            modifiedOptions.RequireEncryption = 
+                modifiedOptions.RequireEncryption 
+                ?? serviceClient.DefaultRequestOptions.RequireEncryption 
+                ?? BaseDefaultRequestOptions.RequireEncryption;
 #endif
-            modifiedOptions.LocationMode = (modifiedOptions.LocationMode 
-                                            ?? serviceClient.DefaultRequestOptions.LocationMode)
-                                            ?? RetryPolicies.LocationMode.PrimaryOnly;
-            modifiedOptions.ServerTimeout = modifiedOptions.ServerTimeout ?? serviceClient.DefaultRequestOptions.ServerTimeout;
-            modifiedOptions.MaximumExecutionTime = modifiedOptions.MaximumExecutionTime ?? serviceClient.DefaultRequestOptions.MaximumExecutionTime;
+
+            modifiedOptions.LocationMode = 
+                modifiedOptions.LocationMode 
+                ?? serviceClient.DefaultRequestOptions.LocationMode 
+                ?? BaseDefaultRequestOptions.LocationMode;
+
+            modifiedOptions.ServerTimeout = 
+                modifiedOptions.ServerTimeout 
+                ?? serviceClient.DefaultRequestOptions.ServerTimeout 
+                ?? BaseDefaultRequestOptions.ServerTimeout;
+
+            modifiedOptions.MaximumExecutionTime = 
+                modifiedOptions.MaximumExecutionTime 
+                ?? serviceClient.DefaultRequestOptions.MaximumExecutionTime 
+                ?? BaseDefaultRequestOptions.MaximumExecutionTime;
             
             if (!modifiedOptions.OperationExpiryTime.HasValue && modifiedOptions.MaximumExecutionTime.HasValue)
             {
@@ -107,7 +143,7 @@ namespace Microsoft.WindowsAzure.Storage.Queue
             }
         }
 
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT || NETCORE)
         internal void AssertPolicyIfRequired()
         {
             if (this.RequireEncryption.HasValue && this.RequireEncryption.Value && this.EncryptionPolicy == null)
@@ -128,7 +164,7 @@ namespace Microsoft.WindowsAzure.Storage.Queue
         /// <value>An object of type <see cref="IRetryPolicy"/>.</value>
         public IRetryPolicy RetryPolicy { get; set; }
 
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT || NETCORE)
         /// <summary>
         /// Gets or sets the encryption policy for the request.
         /// </summary>

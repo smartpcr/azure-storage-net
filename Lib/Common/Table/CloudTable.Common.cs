@@ -28,9 +28,9 @@ namespace Microsoft.WindowsAzure.Storage.Table
     using System.Globalization;
 
     /// <summary>
-    /// Represents a Windows Azure table.
+    /// Represents a Microsoft Azure table.
     /// </summary>
-    public sealed partial class CloudTable
+    public partial class CloudTable
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CloudTable"/> class.
@@ -56,17 +56,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// </summary>
         /// <param name="tableAddress">A <see cref="StorageUri"/> containing the absolute URI to the table at both the primary and secondary locations.</param>
         /// <param name="credentials">A <see cref="StorageCredentials"/> object.</param>
-#if WINDOWS_RT
-        /// <returns>A <see cref="CloudTable"/> object.</returns>
-        public static CloudTable Create(StorageUri tableAddress, StorageCredentials credentials)
-        {
-            return new CloudTable(tableAddress, credentials);
-        }
-
-        internal CloudTable(StorageUri tableAddress, StorageCredentials credentials)
-#else
         public CloudTable(StorageUri tableAddress, StorageCredentials credentials)
-#endif
         {
             this.ParseQueryAndVerify(tableAddress, credentials);
         }
@@ -115,7 +105,6 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <value>An object of type <see cref="StorageUri"/> containing the table's URIs for both the primary and secondary locations.</value>
         public StorageUri StorageUri { get; private set; }
 
-#if !PORTABLE
         /// <summary>
         /// Returns a shared access signature for the table.
         /// </summary>
@@ -239,7 +228,6 @@ namespace Microsoft.WindowsAzure.Storage.Table
             return builder.ToString();
         }
 
-#endif
         /// <summary>
         /// Returns the name of the table.
         /// </summary>

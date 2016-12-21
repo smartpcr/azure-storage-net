@@ -23,7 +23,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-#if ASPNET_K
+#if NETCORE
 using System.Globalization;
 using System.Threading;
 #else
@@ -79,6 +79,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             CloudPageBlob blob = new CloudPageBlob(inputBlob.Uri, credentials);
             OperationContext context = new OperationContext();
             BlobRequestOptions options = new BlobRequestOptions();
+
 
             if (accessType.Equals(BlobContainerPublicAccessType.Container))
             {
@@ -158,7 +159,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             await container.CreateAsync();
             OperationContext operationContext = new OperationContext();
             Assert.ThrowsException<AggregateException>(
-                () => container.CreateAsync(null, operationContext).AsTask().Wait(),
+                () => container.CreateAsync(null, operationContext).Wait(),
                 "Creating already exists container should fail");
             Assert.AreEqual((int)HttpStatusCode.Conflict, operationContext.LastResult.HttpStatusCode);
             await container.DeleteAsync();
@@ -180,7 +181,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -222,7 +223,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -249,7 +250,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -276,7 +277,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -302,7 +303,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
 
             Assert.IsFalse(await container2.ExistsAsync());
@@ -353,7 +354,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -381,7 +382,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -422,7 +423,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -434,7 +435,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
         [TestCategory(TenantTypeCategory.DevStore), TestCategory(TenantTypeCategory.DevFabric), TestCategory(TenantTypeCategory.Cloud)]
         public async Task CloudBlobContainerRegionalSetMetadataAsync()
         {
-#if ASPNET_K
+#if NETCORE
             //CultureInfo currentCulture = CultureInfo.CurrentCulture;
             //CultureInfo.CurrentCulture = new CultureInfo("sk-SK");
 #else
@@ -451,8 +452,8 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
-#if ASPNET_K
+                container.DeleteIfExistsAsync().Wait();
+#if NETCORE
                 //CultureInfo.CurrentCulture = currentCulture;
 #else
                 ApplicationLanguages.PrimaryLanguageOverride = currentPrimaryLanguage;
@@ -484,7 +485,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -521,7 +522,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -559,7 +560,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -735,7 +736,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -795,7 +796,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
     }

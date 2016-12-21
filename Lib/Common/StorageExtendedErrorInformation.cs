@@ -15,9 +15,11 @@
 // </copyright>
 // -----------------------------------------------------------------------------------------
 
+
 namespace Microsoft.WindowsAzure.Storage
 {
     using Microsoft.Data.OData;
+    using Microsoft.WindowsAzure.Storage.Core;
     using Microsoft.WindowsAzure.Storage.Core.Util;
     using Microsoft.WindowsAzure.Storage.Shared.Protocol;
     using Microsoft.WindowsAzure.Storage.Table.Protocol;
@@ -25,7 +27,7 @@ namespace Microsoft.WindowsAzure.Storage
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
-#if WINDOWS_RT || PORTABLE || ASPNET_K
+#if WINDOWS_RT   || NETCORE
     using System.Net.Http;
 #endif
     using System.Xml;
@@ -37,7 +39,7 @@ namespace Microsoft.WindowsAzure.Storage
 #endif
 
     /// <summary>
-    /// Represents extended error information returned by the Windows Azure storage services.
+    /// Represents extended error information returned by the Microsoft Azure storage services.
     /// </summary>
 #if WINDOWS_DESKTOP && !WINDOWS_PHONE
     [Serializable]
@@ -81,12 +83,7 @@ namespace Microsoft.WindowsAzure.Storage
         /// </summary>
         /// <param name="inputStream">The input stream.</param>
         /// <returns>The error details.</returns>
-#if WINDOWS_RT
-        internal
-#else
-        public
-#endif
-        static StorageExtendedErrorInformation ReadFromStream(Stream inputStream)
+        public static StorageExtendedErrorInformation ReadFromStream(Stream inputStream)
         {
             CommonUtility.AssertNotNull("inputStream", inputStream);
 
@@ -120,7 +117,7 @@ namespace Microsoft.WindowsAzure.Storage
         /// <param name="response">The web response.</param>
         /// <param name="contentType">The response Content-Type.</param>
         /// <returns>The error details.</returns>
-#if WINDOWS_RT || ASPNET_K || PORTABLE
+#if WINDOWS_RT || NETCORE
         public static StorageExtendedErrorInformation ReadFromStreamUsingODataLib(Stream inputStream, HttpResponseMessage response, string contentType)
 #else
         public static StorageExtendedErrorInformation ReadFromStreamUsingODataLib(Stream inputStream, HttpWebResponse response, string contentType)
@@ -134,7 +131,7 @@ namespace Microsoft.WindowsAzure.Storage
                 return null;
             }
 
-            HttpResponseAdapterMessage responseMessage = new HttpResponseAdapterMessage(response, inputStream, contentType);
+            HttpResponseAdapterMessage responseMessage = new HttpResponseAdapterMessage(response, new NonCloseableStream(inputStream), contentType);
             return ReadAndParseExtendedError(responseMessage);
         }
 

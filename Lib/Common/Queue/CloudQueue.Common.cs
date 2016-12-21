@@ -29,10 +29,10 @@ namespace Microsoft.WindowsAzure.Storage.Queue
     using System.Globalization;
 
     /// <summary>
-    /// This class represents a queue in the Windows Azure Queue service.
+    /// Represents a queue in the Microsoft Azure Queue service.
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Reviewed.")]
-    public sealed partial class CloudQueue
+    public partial class CloudQueue
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CloudQueue"/> class.
@@ -58,17 +58,8 @@ namespace Microsoft.WindowsAzure.Storage.Queue
         /// </summary>
         /// <param name="queueAddress">A <see cref="StorageUri"/> containing the absolute URI to the queue at both the primary and secondary locations.</param>
         /// <param name="credentials">A <see cref="StorageCredentials"/> object.</param>
-#if WINDOWS_RT
         /// <returns>A <see cref="CloudQueue"/> object.</returns>
-        public static CloudQueue Create(StorageUri queueAddress, StorageCredentials credentials)
-        {
-            return new CloudQueue(queueAddress, credentials);
-        }
-
-        internal CloudQueue(StorageUri queueAddress, StorageCredentials credentials)
-#else
         public CloudQueue(StorageUri queueAddress, StorageCredentials credentials)
-#endif
         {
             this.ParseQueryAndVerify(queueAddress, credentials);
             this.Metadata = new Dictionary<string, string>();
@@ -238,7 +229,7 @@ namespace Microsoft.WindowsAzure.Storage.Queue
         {
             CloudQueueMessage message = null;
             byte[] dest = null;
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT || NETCORE)
             if (options != null && options.EncryptionPolicy != null)
             {
                 // If EncryptionPolicy is set, decrypt the message and set it.
@@ -260,7 +251,7 @@ namespace Microsoft.WindowsAzure.Storage.Queue
             }
             else
             {
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT || NETCORE)
                 if (dest != null)
                 {
                     message = new CloudQueueMessage(dest);
@@ -281,7 +272,6 @@ namespace Microsoft.WindowsAzure.Storage.Queue
             return message;
         }
 
-#if !PORTABLE
         /// <summary>
         /// Returns a shared access signature for the queue.
         /// </summary>
@@ -347,6 +337,5 @@ namespace Microsoft.WindowsAzure.Storage.Queue
 
             return builder.ToString();
         }
-#endif
     }
 }

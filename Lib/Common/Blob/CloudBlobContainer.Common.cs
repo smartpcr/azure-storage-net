@@ -27,9 +27,9 @@ namespace Microsoft.WindowsAzure.Storage.Blob
     using System.Globalization;
 
     /// <summary>
-    /// Represents a container in the Windows Azure Blob service.
+    /// Represents a container in the Microsoft Azure Blob service.
     /// </summary>
-    public sealed partial class CloudBlobContainer
+    public partial class CloudBlobContainer
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CloudBlobContainer"/> class.
@@ -55,17 +55,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
         /// </summary>
         /// <param name="containerAddress">A <see cref="System.Uri"/> object specifying the absolute URI to the container.</param>
         /// <param name="credentials">A <see cref="StorageCredentials"/> object.</param>
-#if WINDOWS_RT
-        /// <returns>A <see cref="CloudBlobContainer"/> object.</returns>
-        public static CloudBlobContainer Create(StorageUri containerAddress, StorageCredentials credentials)
-        {
-            return new CloudBlobContainer(containerAddress, credentials);
-        }
-
-        internal CloudBlobContainer(StorageUri containerAddress, StorageCredentials credentials)
-#else
         public CloudBlobContainer(StorageUri containerAddress, StorageCredentials credentials)
-#endif
         {
             CommonUtility.AssertNotNull("containerAddress", containerAddress);
             CommonUtility.AssertNotNull("containerAddress", containerAddress.PrimaryUri);
@@ -178,7 +168,6 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             return string.Format(CultureInfo.InvariantCulture, canonicalNameFormat, SR.Blob, accountName, containerName);
         }
 
-#if !PORTABLE
         /// <summary>
         /// Returns a shared access signature for the container.
         /// </summary>
@@ -230,7 +219,6 @@ namespace Microsoft.WindowsAzure.Storage.Blob
 
             return builder.ToString();
         }
-#endif
 
         /// <summary>
         /// Gets a reference to a page blob in this container.

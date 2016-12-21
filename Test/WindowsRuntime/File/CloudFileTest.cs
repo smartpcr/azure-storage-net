@@ -23,7 +23,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-#if ASPNET_K
+#if NETCORE
 using System.Security.Cryptography;
 #else
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -93,7 +93,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -136,7 +136,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -161,7 +161,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -194,7 +194,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteAsync().AsTask().Wait();
+                share.DeleteAsync().Wait();
             }
         }
 
@@ -237,7 +237,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -262,9 +262,7 @@ namespace Microsoft.WindowsAzure.Storage.File
                 await Task.Delay(1000);
 
                 file.Properties.CacheControl = "no-transform";
-#if !ASPNET_K
                 file.Properties.ContentEncoding = "gzip";
-#endif
                 file.Properties.ContentLanguage = "tr,en";
                 file.Properties.ContentMD5 = "MDAwMDAwMDA=";
                 file.Properties.ContentType = "text/html";
@@ -275,9 +273,7 @@ namespace Microsoft.WindowsAzure.Storage.File
                 CloudFile file2 = share.GetRootDirectoryReference().GetFileReference("file1");
                 await file2.FetchAttributesAsync();
                 Assert.AreEqual("no-transform", file2.Properties.CacheControl);
-#if !ASPNET_K
                 Assert.AreEqual("gzip", file2.Properties.ContentEncoding);
-#endif
                 Assert.AreEqual("tr,en", file2.Properties.ContentLanguage);
                 Assert.AreEqual("MDAwMDAwMDA=", file2.Properties.ContentMD5);
                 Assert.AreEqual("text/html", file2.Properties.ContentType);
@@ -289,7 +285,7 @@ namespace Microsoft.WindowsAzure.Storage.File
                     {
                         DisableContentMD5Validation = true,
                     };
-                    await file3.DownloadToStreamAsync(stream.AsOutputStream(), null, options, null);
+                    await file3.DownloadToStreamAsync(stream, null, options, null);
                 }
                 AssertAreEqual(file2.Properties, file3.Properties);
 
@@ -300,7 +296,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -328,7 +324,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -356,13 +352,13 @@ namespace Microsoft.WindowsAzure.Storage.File
                 file.Metadata["key1"] = null;
 
                 Assert.ThrowsException<AggregateException>(
-                    () => file.SetMetadataAsync(null, null, operationContext).AsTask().Wait(),
+                    () => file.SetMetadataAsync(null, null, operationContext).Wait(),
                     "Metadata keys should have a non-null value");
                 Assert.IsInstanceOfType(operationContext.LastResult.Exception.InnerException, typeof(ArgumentException));
 
                 file.Metadata["key1"] = "";
                 Assert.ThrowsException<AggregateException>(
-                    () => file.SetMetadataAsync(null, null, operationContext).AsTask().Wait(),
+                    () => file.SetMetadataAsync(null, null, operationContext).Wait(),
                     "Metadata keys should have a non-empty value");
                 Assert.IsInstanceOfType(operationContext.LastResult.Exception.InnerException, typeof(ArgumentException));
 
@@ -381,7 +377,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -404,12 +400,12 @@ namespace Microsoft.WindowsAzure.Storage.File
 
                 using (MemoryStream memoryStream = new MemoryStream(buffer))
                 {
-                    await file.WriteRangeAsync(memoryStream.AsInputStream(), 512, null);
+                    await file.WriteRangeAsync(memoryStream, 512, null);
                 }
 
                 using (MemoryStream memoryStream = new MemoryStream(buffer))
                 {
-                    await file.WriteRangeAsync(memoryStream.AsInputStream(), 3 * 1024, null);
+                    await file.WriteRangeAsync(memoryStream, 3 * 1024, null);
                 }
 
                 await file.ClearRangeAsync(1024, 1024);
@@ -452,7 +448,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -465,7 +461,7 @@ namespace Microsoft.WindowsAzure.Storage.File
         public async Task CloudFileWriteRangeAsync()
         {
             byte[] buffer = GetRandomBuffer(4 * 1024 * 1024);
-#if ASPNET_K
+#if NETCORE
             MD5 md5 = MD5.Create();
             string contentMD5 = Convert.ToBase64String(md5.ComputeHash(buffer));
 #else
@@ -485,7 +481,7 @@ namespace Microsoft.WindowsAzure.Storage.File
                 using (MemoryStream memoryStream = new MemoryStream())
                 {
                     await TestHelper.ExpectedExceptionAsync<ArgumentOutOfRangeException>(
-                        async () => await file.WriteRangeAsync(memoryStream.AsInputStream(), 0, null),
+                        async () => await file.WriteRangeAsync(memoryStream, 0, null),
                         "Zero-length WriteRange should fail");
                 }
 
@@ -495,40 +491,40 @@ namespace Microsoft.WindowsAzure.Storage.File
                     {
                         OperationContext opContext = new OperationContext();
                         await TestHelper.ExpectedExceptionAsync(
-                            async () => await file.WriteRangeAsync(memoryStream.AsInputStream(), 512, null, null, null, opContext),
+                            async () => await file.WriteRangeAsync(memoryStream, 512, null, null, null, opContext),
                             opContext,
                             "Writing out-of-range ranges should fail",
                             HttpStatusCode.RequestedRangeNotSatisfiable,
                             "InvalidRange");
 
                         memoryStream.Seek(0, SeekOrigin.Begin);
-                        await file.WriteRangeAsync(memoryStream.AsInputStream(), 0, contentMD5);
+                        await file.WriteRangeAsync(memoryStream, 0, contentMD5);
                         resultingData.Write(buffer, 0, buffer.Length);
 
                         int offset = buffer.Length - 1024;
                         memoryStream.Seek(offset, SeekOrigin.Begin);
                         await TestHelper.ExpectedExceptionAsync(
-                            async () => await file.WriteRangeAsync(memoryStream.AsInputStream(), 0, contentMD5, null, null, opContext),
+                            async () => await file.WriteRangeAsync(memoryStream, 0, contentMD5, null, null, opContext),
                             opContext,
                             "Invalid MD5 should fail with mismatch",
                             HttpStatusCode.BadRequest,
                             "Md5Mismatch");
 
                         memoryStream.Seek(offset, SeekOrigin.Begin);
-                        await file.WriteRangeAsync(memoryStream.AsInputStream(), 0, null);
+                        await file.WriteRangeAsync(memoryStream, 0, null);
                         resultingData.Seek(0, SeekOrigin.Begin);
                         resultingData.Write(buffer, offset, buffer.Length - offset);
 
                         offset = buffer.Length - 2048;
                         memoryStream.Seek(offset, SeekOrigin.Begin);
-                        await file.WriteRangeAsync(memoryStream.AsInputStream(), 1024, null);
+                        await file.WriteRangeAsync(memoryStream, 1024, null);
                         resultingData.Seek(1024, SeekOrigin.Begin);
                         resultingData.Write(buffer, offset, buffer.Length - offset);
                     }
 
                     using (MemoryStream fileData = new MemoryStream())
                     {
-                        await file.DownloadToStreamAsync(fileData.AsOutputStream());
+                        await file.DownloadToStreamAsync(fileData);
                         Assert.AreEqual(resultingData.Length, fileData.Length);
 
                         Assert.IsTrue(fileData.ToArray().SequenceEqual(resultingData.ToArray()));
@@ -537,7 +533,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -582,7 +578,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteAsync().AsTask().Wait();
+                share.DeleteAsync().Wait();
             }
         }
         */
@@ -604,7 +600,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteAsync().AsTask().Wait();
+                share.DeleteAsync().Wait();
             }
         }
 
@@ -634,7 +630,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteAsync().AsTask().Wait();
+                share.DeleteAsync().Wait();
             }
         }
 
@@ -660,14 +656,14 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteAsync().AsTask().Wait();
+                share.DeleteAsync().Wait();
             }
         }
 
         private async Task CloudFileUploadFromStreamAsync(CloudFileShare share, int size, long? copyLength, AccessCondition accessCondition, OperationContext operationContext, int startOffset)
         {
             byte[] buffer = GetRandomBuffer(size);
-#if ASPNET_K
+#if NETCORE
             MD5 hasher = MD5.Create();
             string md5 = Convert.ToBase64String(hasher.ComputeHash(buffer, startOffset, copyLength.HasValue ? (int)copyLength : buffer.Length - startOffset));
 #else
@@ -692,11 +688,11 @@ namespace Microsoft.WindowsAzure.Storage.File
                     };
                     if (copyLength.HasValue)
                     {
-                        await file.UploadFromStreamAsync(sourceStream.AsInputStream(), copyLength.Value, accessCondition, options, operationContext);
+                        await file.UploadFromStreamAsync(sourceStream, copyLength.Value, accessCondition, options, operationContext);
                     }
                     else
                     {
-                        await file.UploadFromStreamAsync(sourceStream.AsInputStream(), accessCondition, options, operationContext);
+                        await file.UploadFromStreamAsync(sourceStream, accessCondition, options, operationContext);
                     }
                 }
 
@@ -705,7 +701,7 @@ namespace Microsoft.WindowsAzure.Storage.File
 
                 using (MemoryStream downloadedFileStream = new MemoryStream())
                 {
-                    await file.DownloadToStreamAsync(downloadedFileStream.AsOutputStream());
+                    await file.DownloadToStreamAsync(downloadedFileStream);
                     Assert.AreEqual(copyLength ?? originalFileStream.Length, downloadedFileStream.Length);
                     TestHelper.AssertStreamsAreEqualAtIndex(
                         originalFileStream,
@@ -828,7 +824,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
         */
@@ -855,24 +851,24 @@ namespace Microsoft.WindowsAzure.Storage.File
                 using (MemoryStream stream = new MemoryStream())
                 {
                     stream.SetLength(511);
-                    await file.WriteRangeAsync(stream.AsInputStream(), 0, null);
+                    await file.WriteRangeAsync(stream, 0, null);
                 }
 
                 using (MemoryStream stream = new MemoryStream())
                 {
                     stream.SetLength(512);
-                    await file.WriteRangeAsync(stream.AsInputStream(), 0, null);
+                    await file.WriteRangeAsync(stream, 0, null);
                 }
 
                 using (MemoryStream stream = new MemoryStream())
                 {
                     stream.SetLength(513);
-                    await file.WriteRangeAsync(stream.AsInputStream(), 0, null);
+                    await file.WriteRangeAsync(stream, 0, null);
                 }
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -896,7 +892,7 @@ namespace Microsoft.WindowsAzure.Storage.File
 
                 using (MemoryStream stream = new MemoryStream())
                 {
-                    await file.UploadFromStreamAsync(stream.AsInputStream());
+                    await file.UploadFromStreamAsync(stream);
                 }
 
                 await TestHelper.ExpectedExceptionAsync<ArgumentNullException>(
@@ -905,13 +901,13 @@ namespace Microsoft.WindowsAzure.Storage.File
 
                 using (MemoryStream stream = new MemoryStream())
                 {
-                    await file.DownloadToStreamAsync(stream.AsOutputStream());
+                    await file.DownloadToStreamAsync(stream);
                     Assert.AreEqual(0, stream.Length);
                 }
             }
             finally
             {
-                share.DeleteIfExistsAsync().AsTask().Wait();
+                share.DeleteIfExistsAsync().Wait();
             }
         }
     }

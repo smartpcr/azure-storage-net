@@ -83,7 +83,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
             for (int m = 0; m < 20; m++)
             {
                 CloudTable tableRef = tableClient.GetTableReference(GenerateRandomTableName());
-                tableRef.CreateIfNotExistsAsync().AsTask().Wait();
+                tableRef.CreateIfNotExistsAsync().Wait();
                 createdTables.Add(tableRef);
             }
 
@@ -92,7 +92,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
             for (int m = 0; m < 20; m++)
             {
                 CloudTable tableRef = tableClient.GetTableReference(prefixTablesPrefix + m.ToString());
-                tableRef.CreateIfNotExistsAsync().AsTask().Wait();
+                tableRef.CreateIfNotExistsAsync().Wait();
                 createdTables.Add(tableRef);
             }
         }
@@ -107,7 +107,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
             {
                 try
                 {
-                    t.DeleteIfExistsAsync().AsTask().Wait();
+                    t.DeleteIfExistsAsync().Wait();
                 }
                 catch (Exception)
                 {
@@ -321,6 +321,26 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TestHelper.VerifyServiceStats(await client.GetServiceStatsAsync());
         }
 
+        [TestMethod]
+        [Description("Testing GetServiceStats with invalid Location Mode - ASYNC")]
+        [TestCategory(ComponentCategory.Table)]
+        [TestCategory(TestTypeCategory.UnitTest)]
+        [TestCategory(SmokeTestCategory.NonSmoke)]
+        [TestCategory(TenantTypeCategory.DevStore), TestCategory(TenantTypeCategory.DevFabric), TestCategory(TenantTypeCategory.Cloud)]
+        public async Task CloudTableClientGetServiceStatsInvalidLocAsync()
+        {
+            CloudTableClient client = GenerateCloudTableClient();
+            client.DefaultRequestOptions.LocationMode = LocationMode.PrimaryOnly;
+            try
+            {
+                TestHelper.VerifyServiceStats(await client.GetServiceStatsAsync());
+                Assert.Fail("GetServiceStats should fail and throw an InvalidOperationException.");
+            }
+            catch (Exception e)
+            {
+                Assert.IsInstanceOfType(e, typeof(InvalidOperationException));
+            }
+        }
 
         [TestMethod]
         [Description("Server timeout query parameter")]

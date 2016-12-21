@@ -24,7 +24,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
     using Microsoft.WindowsAzure.Storage.RetryPolicies;
     using Microsoft.WindowsAzure.Storage.Shared.Protocol;
     using System;
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT || NETCORE)
     using System.Security.Cryptography;
 #endif
     
@@ -49,6 +49,35 @@ namespace Microsoft.WindowsAzure.Storage.Blob
         private TimeSpan? maximumExecutionTime;
 
         /// <summary>
+        /// Defines the absolute default option values, should neither the user nor client specify anything.
+        /// </summary>
+        internal static BlobRequestOptions BaseDefaultRequestOptions = new BlobRequestOptions()
+        {
+            RetryPolicy = new NoRetry(),
+            AbsorbConditionalErrorsOnRetry = false,
+
+#if !(WINDOWS_RT || NETCORE)
+            EncryptionPolicy = null,
+            RequireEncryption = null,
+#endif
+            LocationMode = RetryPolicies.LocationMode.PrimaryOnly,
+            ServerTimeout = null,
+            MaximumExecutionTime = null,
+            ParallelOperationThreadCount = 1,
+            SingleBlobUploadThresholdInBytes = Constants.MaxSingleUploadBlobSize / 2,
+            
+#if (WINDOWS_PHONE && WINDOWS_DESKTOP)  
+            DisableContentMD5Validation = true,
+            StoreBlobContentMD5 = false,
+            UseTransactionalMD5 = false,
+#else
+            DisableContentMD5Validation = false,
+            //// StoreBlobContentMD5 = (blobType == BlobType.BlockBlob), // must be computed in ApplyDefaults
+            UseTransactionalMD5 = false,
+#endif
+        };
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="BlobRequestOptions"/> class.
         /// </summary>
         public BlobRequestOptions()
@@ -65,7 +94,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             {
                 this.RetryPolicy = other.RetryPolicy;
                 this.AbsorbConditionalErrorsOnRetry = other.AbsorbConditionalErrorsOnRetry;
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT || NETCORE)
                 this.EncryptionPolicy = other.EncryptionPolicy;
                 this.RequireEncryption = other.RequireEncryption;
                 this.SkipEncryptionPolicyValidation = other.SkipEncryptionPolicyValidation;
@@ -86,45 +115,77 @@ namespace Microsoft.WindowsAzure.Storage.Blob
         {
             BlobRequestOptions modifiedOptions = new BlobRequestOptions(options);
 
-            modifiedOptions.RetryPolicy = modifiedOptions.RetryPolicy ?? serviceClient.DefaultRequestOptions.RetryPolicy;
-            modifiedOptions.AbsorbConditionalErrorsOnRetry = modifiedOptions.AbsorbConditionalErrorsOnRetry 
-                ?? serviceClient.DefaultRequestOptions.AbsorbConditionalErrorsOnRetry
-                ?? false;
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
-            modifiedOptions.EncryptionPolicy = modifiedOptions.EncryptionPolicy ?? serviceClient.DefaultRequestOptions.EncryptionPolicy;
-            modifiedOptions.RequireEncryption = modifiedOptions.RequireEncryption ?? serviceClient.DefaultRequestOptions.RequireEncryption;
+            modifiedOptions.RetryPolicy = 
+                modifiedOptions.RetryPolicy 
+                ?? serviceClient.DefaultRequestOptions.RetryPolicy 
+                ?? BaseDefaultRequestOptions.RetryPolicy;
+
+            modifiedOptions.AbsorbConditionalErrorsOnRetry = 
+                modifiedOptions.AbsorbConditionalErrorsOnRetry 
+                ?? serviceClient.DefaultRequestOptions.AbsorbConditionalErrorsOnRetry 
+                ?? BaseDefaultRequestOptions.AbsorbConditionalErrorsOnRetry;
+
+#if !(WINDOWS_RT || NETCORE)
+            modifiedOptions.EncryptionPolicy = 
+                modifiedOptions.EncryptionPolicy 
+                ?? serviceClient.DefaultRequestOptions.EncryptionPolicy 
+                ?? BaseDefaultRequestOptions.EncryptionPolicy;
+
+            modifiedOptions.RequireEncryption = 
+                modifiedOptions.RequireEncryption 
+                ?? serviceClient.DefaultRequestOptions.RequireEncryption 
+                ?? BaseDefaultRequestOptions.RequireEncryption;
 #endif
-            modifiedOptions.LocationMode = (modifiedOptions.LocationMode 
-                                            ?? serviceClient.DefaultRequestOptions.LocationMode) 
-                                            ?? RetryPolicies.LocationMode.PrimaryOnly;
-            modifiedOptions.ServerTimeout = modifiedOptions.ServerTimeout ?? serviceClient.DefaultRequestOptions.ServerTimeout;
-            modifiedOptions.MaximumExecutionTime = modifiedOptions.MaximumExecutionTime ?? serviceClient.DefaultRequestOptions.MaximumExecutionTime;
-            modifiedOptions.ParallelOperationThreadCount = (modifiedOptions.ParallelOperationThreadCount
-                                                           ?? serviceClient.DefaultRequestOptions.ParallelOperationThreadCount)
-                                                           ?? 1;
-            modifiedOptions.SingleBlobUploadThresholdInBytes = (modifiedOptions.SingleBlobUploadThresholdInBytes
-                                                               ?? serviceClient.DefaultRequestOptions.SingleBlobUploadThresholdInBytes)
-                                                               ?? Constants.MaxSingleUploadBlobSize / 2;
+
+            modifiedOptions.LocationMode = 
+                modifiedOptions.LocationMode 
+                ?? serviceClient.DefaultRequestOptions.LocationMode 
+                ?? BaseDefaultRequestOptions.LocationMode;
+
+            modifiedOptions.ServerTimeout = 
+                modifiedOptions.ServerTimeout 
+                ?? serviceClient.DefaultRequestOptions.ServerTimeout 
+                ?? BaseDefaultRequestOptions.ServerTimeout;
+
+            modifiedOptions.MaximumExecutionTime = 
+                modifiedOptions.MaximumExecutionTime 
+                ?? serviceClient.DefaultRequestOptions.MaximumExecutionTime 
+                ?? BaseDefaultRequestOptions.MaximumExecutionTime;
+
+            modifiedOptions.ParallelOperationThreadCount = 
+                modifiedOptions.ParallelOperationThreadCount 
+                ?? serviceClient.DefaultRequestOptions.ParallelOperationThreadCount 
+                ?? BaseDefaultRequestOptions.ParallelOperationThreadCount;
+
+            modifiedOptions.SingleBlobUploadThresholdInBytes = 
+                modifiedOptions.SingleBlobUploadThresholdInBytes 
+                ?? serviceClient.DefaultRequestOptions.SingleBlobUploadThresholdInBytes 
+                ?? BaseDefaultRequestOptions.SingleBlobUploadThresholdInBytes;
             
             if (applyExpiry && !modifiedOptions.OperationExpiryTime.HasValue && modifiedOptions.MaximumExecutionTime.HasValue)
             {
                 modifiedOptions.OperationExpiryTime = DateTime.Now + modifiedOptions.MaximumExecutionTime.Value;
             }
 
-#if (WINDOWS_PHONE && WINDOWS_DESKTOP) || PORTABLE
-            modifiedOptions.DisableContentMD5Validation = true;
-            modifiedOptions.StoreBlobContentMD5 = false;
-            modifiedOptions.UseTransactionalMD5 = false;
+#if (WINDOWS_PHONE && WINDOWS_DESKTOP)  
+            modifiedOptions.DisableContentMD5Validation = BaseDefaultRequestOptions.DisableContentMD5Validation;
+            modifiedOptions.StoreBlobContentMD5 = BaseDefaultRequestOptions.StoreBlobContentMD5;
+            modifiedOptions.UseTransactionalMD5 = BaseDefaultRequestOptions.UseTransactionalMD5;
 #else
-            modifiedOptions.DisableContentMD5Validation = (modifiedOptions.DisableContentMD5Validation
-                                                            ?? serviceClient.DefaultRequestOptions.DisableContentMD5Validation) 
-                                                            ?? false;
-            modifiedOptions.StoreBlobContentMD5 = (modifiedOptions.StoreBlobContentMD5 
-                                                    ?? serviceClient.DefaultRequestOptions.StoreBlobContentMD5)
-                                                    ?? blobType == BlobType.BlockBlob;
-            modifiedOptions.UseTransactionalMD5 = (modifiedOptions.UseTransactionalMD5 
-                                                    ?? serviceClient.DefaultRequestOptions.UseTransactionalMD5)
-                                                    ?? false;
+            modifiedOptions.DisableContentMD5Validation = 
+                modifiedOptions.DisableContentMD5Validation 
+                ?? serviceClient.DefaultRequestOptions.DisableContentMD5Validation 
+                ?? BaseDefaultRequestOptions.DisableContentMD5Validation;
+
+            modifiedOptions.StoreBlobContentMD5 = 
+                modifiedOptions.StoreBlobContentMD5 
+                ?? serviceClient.DefaultRequestOptions.StoreBlobContentMD5 
+                ?? (blobType == BlobType.BlockBlob); // must be computed
+
+            modifiedOptions.UseTransactionalMD5 = 
+                modifiedOptions.UseTransactionalMD5 
+                ?? serviceClient.DefaultRequestOptions.UseTransactionalMD5 
+                ?? BaseDefaultRequestOptions.UseTransactionalMD5;
 #endif
 
             return modifiedOptions;
@@ -152,7 +213,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
         }
 
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT || NETCORE)
         internal void AssertNoEncryptionPolicyOrStrictMode()
         {
             // Throw if an encryption policy is set and encryption validation is on
@@ -184,7 +245,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
         /// <value>An object of type <see cref="IRetryPolicy"/>.</value>
         public IRetryPolicy RetryPolicy { get; set; }
 
-#if !(WINDOWS_RT || ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT || NETCORE)
         /// <summary>
         /// Gets or sets the encryption policy for the request.
         /// </summary>
@@ -301,8 +362,6 @@ namespace Microsoft.WindowsAzure.Storage.Blob
         /// <value>Use <c>true</c> to calculate and send/validate content MD5 for transactions; otherwise, <c>false</c>.</value>       
 #if  WINDOWS_PHONE && WINDOWS_DESKTOP
         /// <remarks>This property is not supported for Windows Phone.</remarks>
-#elif PORTABLE
-        /// <remarks>This property is not supported for Portable Class Library.</remarks>
 #endif
         public bool? UseTransactionalMD5
         {
@@ -318,11 +377,6 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 {
                     throw new NotSupportedException(SR.WindowsPhoneDoesNotSupportMD5);
                 }
-#elif PORTABLE
-                if (value.HasValue && value.Value)
-                {
-                    throw new NotSupportedException(SR.PortableDoesNotSupportMD5);
-                }
 #endif
                 this.useTransactionalMD5 = value;
             }
@@ -334,11 +388,9 @@ namespace Microsoft.WindowsAzure.Storage.Blob
         /// Gets or sets a value to indicate that an MD5 hash will be calculated and stored when uploading a blob.
         /// </summary>
         /// <value>Use <c>true</c> to calculate and store an MD5 hash when uploading a blob; otherwise, <c>false</c>.</value>
-        /// <remarks>This property is not supported for <see cref="CloudAppendBlob"/>.</remarks>
+        /// <remarks>This property is not supported for the <see cref="CloudAppendBlob"/> Append* APIs.</remarks>
 #if  WINDOWS_PHONE && WINDOWS_DESKTOP
         /// <remarks>This property is not supported for Windows Phone.</remarks>
-#elif PORTABLE
-        /// <remarks>This property is not supported for Portable Class Library.</remarks>
 #endif
         public bool? StoreBlobContentMD5
         {
@@ -354,11 +406,6 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 {
                     throw new NotSupportedException(SR.WindowsPhoneDoesNotSupportMD5);
                 }
-#elif PORTABLE
-                if (value.HasValue && value.Value)
-                {
-                    throw new NotSupportedException(SR.PortableDoesNotSupportMD5);
-                }
 #endif
                 this.storeBlobContentMD5 = value;
             }
@@ -372,8 +419,6 @@ namespace Microsoft.WindowsAzure.Storage.Blob
         /// <value>Use <c>true</c> to disable MD5 validation; <c>false</c> to enable MD5 validation.</value>
 #if  WINDOWS_PHONE && WINDOWS_DESKTOP
         /// <remarks>This property is not supported for Windows Phone.</remarks>
-#elif PORTABLE
-        /// <remarks>This property is not supported for Portable Class Library.</remarks>
 #endif
         public bool? DisableContentMD5Validation
         {
@@ -388,11 +433,6 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 if (value.HasValue && !value.Value)
                 {
                     throw new NotSupportedException(SR.WindowsPhoneDoesNotSupportMD5);
-                }
-#elif PORTABLE
-                if (value.HasValue && !value.Value)
-                {
-                    throw new NotSupportedException(SR.PortableDoesNotSupportMD5);
                 }
 #endif
                 this.disableContentMD5Validation = value;

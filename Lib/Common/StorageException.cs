@@ -29,26 +29,22 @@ namespace Microsoft.WindowsAzure.Storage
     using System.Collections.Generic;
     using System.Globalization;
     using System.Runtime.Serialization;
-#elif WINDOWS_RT || ASPNET_K || PORTABLE
+#elif WINDOWS_RT || NETCORE
     using System.Runtime.InteropServices;
 #endif
 
-#if ASPNET_K || PORTABLE
+#if NETCORE
     using System.Net.Http;
 #endif
 
     /// <summary>
-    /// Represents an exception thrown by the Windows Azure storage service.
+    /// Represents an exception thrown by the Azure Storage service.
     /// </summary>
 #if WINDOWS_DESKTOP && !WINDOWS_PHONE
     [Serializable]
 #endif
 
-#if WINDOWS_RT
-    internal class StorageException : COMException
-#else
     public class StorageException : Exception
-#endif
     {
         /// <summary>
         /// Gets the <see cref="RequestResult"/> object for this <see cref="StorageException"/> object.
@@ -56,6 +52,9 @@ namespace Microsoft.WindowsAzure.Storage
         /// <value>The <see cref="RequestResult"/> object for this <see cref="StorageException"/> object.</value>
         public RequestResult RequestInformation { get; private set; }
 
+        /// <summary>
+        /// Indicates if exception is retryable.
+        /// </summary>
         internal bool IsRetryable { get; set; }
 
         /// <summary>
@@ -88,8 +87,8 @@ namespace Microsoft.WindowsAzure.Storage
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageException"/> class with serialized data.
         /// </summary>
-        /// <param name="context">The <see cref="System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
         /// <param name="info">The <see cref="System.Runtime.Serialization.SerializationInfo"/> object that holds serialized object data for the exception being thrown.</param>
+        /// <param name="context">The <see cref="System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
         /// <remarks>This constructor is called during de-serialization to reconstitute the exception object transmitted over a stream.</remarks>
         protected StorageException(SerializationInfo info, StreamingContext context) :
             base(info, context) 
@@ -104,8 +103,8 @@ namespace Microsoft.WindowsAzure.Storage
         /// <summary>
         /// Populates a <see cref="System.Runtime.Serialization.SerializationInfo"/> object with the data needed to serialize the target object.
         /// </summary>
-        /// <param name="context">The destination context for this serialization.</param>
         /// <param name="info">The <see cref="System.Runtime.Serialization.SerializationInfo"/> object to populate with data.</param>
+        /// <param name="context">The destination context for this serialization.</param>
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info != null)
@@ -161,7 +160,7 @@ namespace Microsoft.WindowsAzure.Storage
                     return storageException;
                 }
 
-#if !(ASPNET_K || PORTABLE)
+#if !(NETCORE)
                 WebException we = ex as WebException;
                 if (we != null)
                 {
@@ -184,7 +183,7 @@ namespace Microsoft.WindowsAzure.Storage
             return new StorageException(reqResult, ex.Message, ex);
         }
 
-#if ASPNET_K || PORTABLE
+#if NETCORE
         /// <summary>
         /// Translates the specified exception into a storage exception.
         /// </summary>
@@ -207,7 +206,7 @@ namespace Microsoft.WindowsAzure.Storage
                 if (response != null)
                 {
                     StorageException.PopulateRequestResult(reqResult, response);
-                    reqResult.ExtendedErrorInformation = StorageExtendedErrorInformation.ReadFromStream(response.Content.ReadAsStreamAsync().Result);
+                    reqResult.ExtendedErrorInformation = CommonUtility.RunWithoutSynchronizationContext(() => StorageExtendedErrorInformation.ReadFromStream(response.Content.ReadAsStreamAsync().Result));
                 }
             }
             catch (Exception)
@@ -240,7 +239,7 @@ namespace Microsoft.WindowsAzure.Storage
                     return storageException;
                 }
 
-#if !(ASPNET_K || PORTABLE)
+#if !(NETCORE)
                 WebException we = ex as WebException;
                 if (we != null)
                 {
@@ -263,7 +262,7 @@ namespace Microsoft.WindowsAzure.Storage
             return new StorageException(reqResult, ex.Message, ex);
         }
 
-#if ASPNET_K || PORTABLE
+#if NETCORE
         /// <summary>
         /// Translates the specified exception into a storage exception.
         /// </summary>
@@ -337,7 +336,7 @@ namespace Microsoft.WindowsAzure.Storage
                 reqResult.ExtendedErrorInformation = null;
                 return new StorageException(reqResult, ex.Message, ex) { IsRetryable = false };
             }
-#if WINDOWS_RT || ASPNET_K || PORTABLE
+#if WINDOWS_RT || NETCORE
             else if (ex is OperationCanceledException)
             {
                 reqResult.HttpStatusMessage = null;
@@ -414,7 +413,7 @@ namespace Microsoft.WindowsAzure.Storage
         /// </summary>
         /// <param name="reqResult">The request result.</param>
         /// <param name="response">The web response.</param>
-#if ASPNET_K || PORTABLE
+#if NETCORE
         private static void PopulateRequestResult(RequestResult reqResult, HttpResponseMessage response)
         {
             reqResult.HttpStatusMessage = response.StatusCode.ToString();
@@ -446,7 +445,7 @@ namespace Microsoft.WindowsAzure.Storage
 #endif
 
         /// <summary>
-        /// Represents an exception thrown by the Windows Azure storage client library. 
+        /// Represents an exception thrown by the Microsoft Azure storage client library. 
         /// </summary>
         /// <returns>A string that represents the exception.</returns>
         public override string ToString()

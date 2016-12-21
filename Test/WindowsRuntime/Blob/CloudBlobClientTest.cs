@@ -25,7 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-#if ASPNET_K
+#if NETCORE
 using Microsoft.WindowsAzure.Storage.Test.Extensions;
 using System.Threading;
 #else
@@ -193,7 +193,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -332,12 +332,12 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 {
                     try
                     {
-                        await blockBlob.UploadFromStreamAsync(ms.AsInputStream());
+                        await blockBlob.UploadFromStreamAsync(ms);
                         Assert.Fail();
                     }
                     catch (AggregateException ex)
                     {
-                        Assert.AreEqual("The client could not finish the operation within specified timeout.", RequestResult.TranslateFromExceptionMessage(ex.InnerException.InnerException.Message).ExceptionInfo.Message);
+                        Assert.AreEqual("The client could not finish the operation within specified timeout.", RequestResult.TranslateFromExceptionMessage(ex.InnerException.Message).ExceptionInfo.Message);
                     }
                     catch (TaskCanceledException)
                     {
@@ -350,12 +350,12 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 {
                     try
                     {
-                        await pageBlob.UploadFromStreamAsync(ms.AsInputStream());
+                        await pageBlob.UploadFromStreamAsync(ms);
                         Assert.Fail();
                     }
                     catch (AggregateException ex)
                     {
-                        Assert.AreEqual("The client could not finish the operation within specified timeout.", RequestResult.TranslateFromExceptionMessage(ex.InnerException.InnerException.Message).ExceptionInfo.Message);
+                        Assert.AreEqual("The client could not finish the operation within specified timeout.", RequestResult.TranslateFromExceptionMessage(ex.InnerException.Message).ExceptionInfo.Message);
                     }
                     catch (TaskCanceledException)
                     {
@@ -365,7 +365,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             finally
             {
                 blobClient.DefaultRequestOptions.MaximumExecutionTime = null;
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -398,7 +398,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                     DateTime start = DateTime.Now;
                     for (int i = 0; i < 7; i++)
                     {
-                        await bos.WriteAsync(buffer.AsBuffer());
+                        await bos.WriteAsync(buffer, 0, buffer.Length);
                     }
 
                     // Sleep to ensure we are over the Max execution time when we do the last write
@@ -409,11 +409,11 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                         await Task.Delay(msRemaining);
                     }
 
-                    await bos.WriteAsync(buffer.AsBuffer());
+                    await bos.WriteAsync(buffer, 0, buffer.Length);
                     await bos.CommitAsync();
                 }
 
-                using (Stream bis = (await blockBlob.OpenReadAsync()).AsStreamForRead())
+                using (Stream bis = (await blockBlob.OpenReadAsync()))
                 {
                     DateTime start = DateTime.Now;
                     int total = 0;
@@ -444,7 +444,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                     DateTime start = DateTime.Now;
                     for (int i = 0; i < 7; i++)
                     {
-                        await bos.WriteAsync(buffer.AsBuffer());
+                        await bos.WriteAsync(buffer, 0, buffer.Length);
                     }
 
                     // Sleep to ensure we are over the Max execution time when we do the last write
@@ -455,11 +455,11 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                         await Task.Delay(msRemaining);
                     }
 
-                    await bos.WriteAsync(buffer.AsBuffer());
+                    await bos.WriteAsync(buffer, 0, buffer.Length);
                     await bos.CommitAsync();
                 }
 
-                using (Stream bis = (await pageBlob.OpenReadAsync()).AsStreamForRead())
+                using (Stream bis = (await pageBlob.OpenReadAsync()))
                 {
                     DateTime start = DateTime.Now;
                     int total = 0;
@@ -489,7 +489,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             finally
             {
                 blobClient.DefaultRequestOptions.MaximumExecutionTime = null;
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -506,6 +506,27 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             CloudBlobClient client = GenerateCloudBlobClient();
             client.DefaultRequestOptions.LocationMode = LocationMode.SecondaryOnly;
             TestHelper.VerifyServiceStats(await client.GetServiceStatsAsync());
+        }
+
+        [TestMethod]
+        [Description("Testing GetServiceStats with invalid Location Mode - ASYNC")]
+        [TestCategory(ComponentCategory.Table)]
+        [TestCategory(TestTypeCategory.UnitTest)]
+        [TestCategory(SmokeTestCategory.NonSmoke)]
+        [TestCategory(TenantTypeCategory.DevStore), TestCategory(TenantTypeCategory.DevFabric), TestCategory(TenantTypeCategory.Cloud)]
+        public async Task CloudBlobClientGetServiceStatsInvalidLocAsync()
+        {
+            CloudBlobClient client = GenerateCloudBlobClient();
+            client.DefaultRequestOptions.LocationMode = LocationMode.PrimaryOnly;
+            try
+            {
+                TestHelper.VerifyServiceStats(await client.GetServiceStatsAsync());
+                Assert.Fail("GetServiceStats should fail and throw an InvalidOperationException.");
+            }
+            catch (Exception e)
+            {
+                Assert.IsInstanceOfType(e, typeof(InvalidOperationException));
+            }
         }
 
         [TestMethod]

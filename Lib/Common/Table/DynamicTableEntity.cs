@@ -67,8 +67,6 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <param name="properties">An <see cref="IDictionary{TKey,TValue}"/> object containing the entity's properties, indexed by property name.</param>
         internal DynamicTableEntity(string partitionKey, string rowKey, DateTimeOffset timestamp, string etag, IDictionary<string, EntityProperty> properties)
         {
-            CommonUtility.AssertNotNull("partitionKey", partitionKey);
-            CommonUtility.AssertNotNull("rowKey", rowKey);
             CommonUtility.AssertNotNull("properties", properties);
 
             // Store the information about this entity.  Make a copy of
@@ -113,7 +111,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <remarks>Set this value to '*' to blindly overwrite an entity as part of an update operation.</remarks>
         public string ETag { get; set; }
 
-#if !(WINDOWS_RT ||  ASPNET_K || PORTABLE)
+#if !(WINDOWS_RT ||  NETCORE)
         /// <summary>
         /// Gets or sets the entity's property, given the name of the property.
         /// </summary>

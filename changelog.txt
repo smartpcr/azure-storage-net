@@ -1,3 +1,68 @@
+Changes in 7.2.1 :
+
+- All: Changes error handling in the case where Streams that are passed into the library have a specific bug.  This case will no longer crash the AppDomain.
+
+Changes in 7.2.0 :
+
+- All (CoreCLR): NetStandard target framework changed to netstandard1.3
+- All (PCL): Removed support for PCL in favor of NetStandard GA release
+- Table (CoreCLR): Added a workaround for missing GetProperties method on TypeInfo in reflection-based Read/Write methods in TableEntity after change to netstandard11.3 TFM
+- Table (CoreCLR): Added logic to wrap the error stream in a noncloseable stream to prevent it from being disposed by ODataMessageReader
+
+Changes in 7.1.3-preview :
+
+- All: CoreCLR projects were updated to use the RTM release of .Net Core 1.0
+
+Changes in 7.1.2 :
+
+- All: Support for 2015-12-11 REST version. Please see our REST API documentation and blogs for information about the related added features. If you are using the Storage Emulator, please update to Emulator version 4.4.
+- Blobs: Added support for server-side encryption.
+- All: Fixed a bug with ContinuationToken where empty TargetLocation resulted in an error in deserialization.
+- Blobs/Tables/Queues: Bug fix and tests for running GetServiceStats with the incompatible PrimaryOnly location mode.
+- All (WinRT): Fixed a bug where HttpClient default timeout caused unhandled TaskCancellation exceptions.
+- All (CoreCLR): Updated the default AutomaticDecompression Method on StorageAuthenticationHttpHandler from Gzip | Deflate to None.
+- Table (CoreCLR) : Fixed a bug where reading table entity properties returned only the declared properties.
+ 
+
+Changes in 7.0.2-preview :
+
+- Blobs (WinRT): Fixed a bug that caused DownloadToFile() to infinite loop for one overload.
+- All : CoreCLR projects were updated to use the RC2 release of .Net Core 1.0
+
+Changes in 7.0.0 :
+
+- All: Support for 2015-07-08 REST version. Please see our REST API documentation and blogs for information about the related added features. If you are using the Storage Emulator, please update to Emulator version 4.3.
+- All (WinRT): All apis now return Task objects instead of IAsync* objects. Please see our blog post for more info.
+- All: Ensure disposal of CancellationTokenSource in StreamExtensions.WriteToAsync<T>.
+- All: Virtualized all service call APIs and unsealed their classes.
+- All: Updated the UserAgent string to match the Azure Storage standard.
+- All: Windows Runtime no longer uses WrappedStorageExceptions or HResults. Catch StorageException and check HTTP status code instead.
+- All: Changed use of HttpClient in Windows Runtime from instance-per-request to singleton instance shared across all requests.
+- All: SetServiceProperties APIs no longer instantiates Logging, HourMetrics, MinuteMetrics, or Cors instance variables. New LoggingProperties, MetricsProperties, and CorsProperties objects will need to be set for those variables before they can be assigned.
+- All: LoggingProperties and MetricsProperties Version now defaults to "1.0" or Constants.AnalyticsConstants.MetricsVersionV1 or LoggingVersionV1.
+- All: Removed deprecated SharedKeyLiteAuthenticationHandler, use SharedKeyAuthenticationHandler instead.
+- All: Removed deprecated request options setters on the *Client class object in favor of setting request options on Client's DefaultRequestOptions object.
+- All: When creating a SAS token with a non-null SharedAccessProtocol, only valid enum values are permitted.  All other values will now throw an ArgumentException.
+- All: Fixed a bug that caused the PCL to not work correctly when only targeting Win8. 
+- Blobs: Removed deprecated (Begin/End)StartCopyFromBlob(Async) APIs in favor of using (Begin/End)StartCopy(Async) APIs.
+- Blobs: Removed deprecated GetSubdirectoryReference API in favor of GetDirectoryReference. 
+- Blobs: Removed FileMode parameter for UploadFromFile* and AppendFromFile* APIs since there is only 1 valid option (FileMode.Open).
+- Blobs: When downloading blob to local file fails, file created for download will be cleaned up.
+- Blobs: proposedLeaseId for minimum AcquireLease API overloads defaults to null.
+- Blobs/Files: Fixed bug in DownloadToFile APIs where existing files could be deleted if users call API with Create or CreateNew FileModes.
+- Tables: Removed deprecated AtomPub payloadFormat support.
+- Tables: Fixed a bug in table batch operations where storage exceptions resulted in operation contexts with incorrect HttpStatusMessage.
+- Tables: Batching validation was added for batch sizes exceeding 100 operations.
+- Tables: Batching validation was added for null partition keys and row keys.
+- Tables: Removed deprecated overloads for Table.Retrieve APIs.
+- Tables: Add ProjectSystemProperties to TableRequestOptions to allow opt-out on system properties (PartitionKey, RowKey, Timestamp).
+- Files: When downloading file to local system file fails, file created for download will be cleaned up.
+- Queues: Removed deprecated EndBeginClear API in favor of EndClear.
+
+Changes since 6.2.2-preview :
+
+- All: TestConfigurations.xml has been deleted and added to the .gitignore file to keep users from accidentally leaking their credentials. To continue running tests, simply add the same file back after you get the latest code.
+
 Changes in 6.2.2-preview :
 
 - All: Fixed bug with CoreCLR UserAgent string.
@@ -373,3 +438,4 @@ Issues fixed in 2.0.1 :
   - All: CloudStorageAccount.*Parse methods throw an exception for "UseDevelopmentStorage=true" string.
   - All: StorageErrorCodeStrings class is missing.
   - Blobs: ICloudBlob interface does not have GetSharedAccessSignature method.
+

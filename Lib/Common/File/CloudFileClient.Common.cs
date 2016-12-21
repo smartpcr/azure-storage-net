@@ -24,11 +24,11 @@ namespace Microsoft.WindowsAzure.Storage.File
     using System;
 
     /// <summary>
-    /// Provides a client-side logical representation of the Windows Azure File service. This client is used to configure and execute requests against the File service.
+    /// Provides a client-side logical representation of the Microsoft Azure File service. This client is used to configure and execute requests against the File service.
     /// </summary>
     /// <remarks>The service client encapsulates the base URI for the File service. If the service client will be used for authenticated access, it also encapsulates 
     /// the credentials for accessing the storage account.</remarks>
-    public sealed partial class CloudFileClient
+    public partial class CloudFileClient
     {
         private AuthenticationScheme authenticationScheme;
 
@@ -49,24 +49,17 @@ namespace Microsoft.WindowsAzure.Storage.File
         /// </summary>
         /// <param name="storageUri">The File service endpoint to use to create the client.</param>
         /// <param name="credentials">A <see cref="StorageCredentials"/> object.</param>
-#if WINDOWS_RT
-        /// <returns>A <see cref="CloudFileClient"/> object.</returns>
-        public static CloudFileClient Create(StorageUri storageUri, StorageCredentials credentials)
-        {
-            return new CloudFileClient(storageUri, credentials);
-        }
-
-        internal CloudFileClient(StorageUri storageUri, StorageCredentials credentials)
-#else
         public CloudFileClient(StorageUri storageUri, StorageCredentials credentials)
-#endif
         {
             this.StorageUri = storageUri;
             this.Credentials = credentials ?? new StorageCredentials();
-            this.DefaultRequestOptions = new FileRequestOptions();
-            this.DefaultRequestOptions.RetryPolicy = new ExponentialRetry();
-            this.DefaultRequestOptions.LocationMode = RetryPolicies.LocationMode.PrimaryOnly;
-            this.DefaultRequestOptions.ParallelOperationThreadCount = 1;
+            this.DefaultRequestOptions = 
+                new FileRequestOptions() 
+                { 
+                    RetryPolicy = new ExponentialRetry(),
+                    LocationMode = FileRequestOptions.BaseDefaultRequestOptions.LocationMode,
+                    ParallelOperationThreadCount = FileRequestOptions.BaseDefaultRequestOptions.ParallelOperationThreadCount
+                };
             this.AuthenticationScheme = AuthenticationScheme.SharedKey;
             this.UsePathStyleUris = CommonUtility.UsePathStyleAddressing(this.BaseUri);
         }
@@ -124,7 +117,7 @@ namespace Microsoft.WindowsAzure.Storage.File
             return new CloudFileShare(shareName, this);
         }
 
-        private ICanonicalizer GetCanonicalizer()
+        internal ICanonicalizer GetCanonicalizer()
         {
             if (this.AuthenticationScheme == AuthenticationScheme.SharedKeyLite)
             {

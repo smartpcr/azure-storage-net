@@ -17,10 +17,12 @@
 
 using Microsoft.WindowsAzure.Storage.Auth;
 using System;
+using System.IO;
 using System.Xml.Linq;
 using Windows.ApplicationModel;
 using Windows.Data.Xml.Dom;
 using Windows.Storage;
+using Windows.Storage.Streams;
 
 namespace Microsoft.WindowsAzure.Storage
 {
@@ -28,13 +30,115 @@ namespace Microsoft.WindowsAzure.Storage
     {
         static TestBase()
         {
-            StorageFile xmlFile = Package.Current.InstalledLocation.GetFileAsync(TestConfigurations.DefaultTestConfigFilePath).AsTask().Result;
-            XmlDocument xmlDoc = XmlDocument.LoadFromFileAsync(xmlFile).AsTask().Result;
+            try
+            {
+                StorageFile xmlFile = Package.Current.InstalledLocation.GetFileAsync(TestConfigurations.DefaultTestConfigFilePath).AsTask().Result;
+                XmlDocument xmlDoc = XmlDocument.LoadFromFileAsync(xmlFile).AsTask().Result;
 
-            XDocument doc = XDocument.Parse(xmlDoc.GetXml());
-            TestConfigurations configurations = TestConfigurations.ReadFromXml(doc);
+                XDocument doc = XDocument.Parse(xmlDoc.GetXml());
+                TestConfigurations configurations = TestConfigurations.ReadFromXml(doc);
 
-            TestBase.Initialize(configurations);
+                TestBase.Initialize(configurations);
+            }
+            catch (System.IO.FileNotFoundException)
+            {
+                throw new System.IO.FileNotFoundException("To run tests you need to supply a TestConfigurations.xml file with credentials in the Test/Common folder. Use TestConfigurationsTemplate.xml as a template.");
+            }
         }
     }
+
+#if WINDOWS_RT
+    public static class MicrosoftStreamExtensions
+    {
+        public static IRandomAccessStreamWithContentType AsRandomAccessStream(this Stream stream)
+        {
+            return new RandomStream(stream);
+        }
+
+    }
+
+    class RandomStream : IRandomAccessStreamWithContentType
+    {
+        Stream internstream;
+
+        public RandomStream(Stream underlyingstream)
+        {
+            internstream = underlyingstream;
+        }
+
+        public IInputStream GetInputStreamAt(ulong position)
+        {
+            internstream.Position = (long)position;
+            return internstream.AsInputStream();
+        }
+
+        public IOutputStream GetOutputStreamAt(ulong position)
+        {
+            internstream.Position = (long)position;
+            return internstream.AsOutputStream();
+        }
+
+        public ulong Size
+        {
+            get
+            {
+                return (ulong)internstream.Length;
+            }
+            set
+            {
+                internstream.SetLength((long)value);
+            }
+        }
+
+        public bool CanRead
+        {
+            get { return this.internstream.CanRead; }
+        }
+
+        public bool CanWrite
+        {
+            get { return this.internstream.CanWrite; }
+        }
+
+        public IRandomAccessStream CloneStream()
+        {
+            throw new NotSupportedException();
+        }
+
+        public ulong Position
+        {
+            get { return (ulong)this.internstream.Position; }
+        }
+
+        public void Seek(ulong position)
+        {
+            this.internstream.Seek((long)position, SeekOrigin.Begin);
+        }
+
+        public void Dispose()
+        {
+            this.internstream.Dispose();
+        }
+
+        public Windows.Foundation.IAsyncOperationWithProgress<IBuffer, uint> ReadAsync(IBuffer buffer, uint count, InputStreamOptions options)
+        {
+            return this.GetInputStreamAt(this.Position).ReadAsync(buffer, count, options);
+        }
+
+        public Windows.Foundation.IAsyncOperation<bool> FlushAsync()
+        {
+            return this.GetOutputStreamAt(this.Position).FlushAsync();
+        }
+
+        public Windows.Foundation.IAsyncOperationWithProgress<uint, uint> WriteAsync(IBuffer buffer)
+        {
+            return this.GetOutputStreamAt(this.Position).WriteAsync(buffer);
+        }
+
+        public string ContentType
+        {
+            get { throw new NotImplementedException(); }
+        }
+    }
+#endif 
 }

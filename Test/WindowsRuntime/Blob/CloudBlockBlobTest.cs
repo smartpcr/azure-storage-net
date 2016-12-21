@@ -24,7 +24,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-#if ASPNET_K
+#if NETCORE
 using System.Security.Cryptography;
 #else
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -62,7 +62,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             {
                 using (MemoryStream stream = new MemoryStream(buffer))
                 {
-                    await blob.PutBlockAsync(block, stream.AsInputStream(), null);
+                    await blob.PutBlockAsync(block, stream, null);
                 }
             }
 
@@ -113,7 +113,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -138,7 +138,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -171,7 +171,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -218,7 +218,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -244,9 +244,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
 
                 blob.Properties.CacheControl = "no-transform";
                 blob.Properties.ContentDisposition = "attachment";
-#if !ASPNET_K
                 blob.Properties.ContentEncoding = "gzip";
-#endif
                 blob.Properties.ContentLanguage = "tr,en";
                 blob.Properties.ContentMD5 = "MDAwMDAwMDA=";
                 blob.Properties.ContentType = "text/html";
@@ -258,9 +256,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 await blob2.FetchAttributesAsync();
                 Assert.AreEqual("no-transform", blob2.Properties.CacheControl);
                 Assert.AreEqual("attachment", blob2.Properties.ContentDisposition);
-#if !ASPNET_K
                 Assert.AreEqual("gzip", blob2.Properties.ContentEncoding);
-#endif
                 Assert.AreEqual("tr,en", blob2.Properties.ContentLanguage);
                 Assert.AreEqual("MDAwMDAwMDA=", blob2.Properties.ContentMD5);
                 Assert.AreEqual("text/html", blob2.Properties.ContentType);
@@ -272,7 +268,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                     {
                         DisableContentMD5Validation = true,
                     };
-                    await blob3.DownloadToStreamAsync(stream.AsOutputStream(), null, options, null);
+                    await blob3.DownloadToStreamAsync(stream, null, options, null);
                 }
                 AssertAreEqual(blob2.Properties, blob3.Properties);
 
@@ -282,7 +278,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -306,13 +302,13 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 OperationContext operationContext = new OperationContext();
 
                 Assert.ThrowsException<AggregateException>(
-                    () => blob2.FetchAttributesAsync(null, null, operationContext).AsTask().Wait(),
+                    () => blob2.FetchAttributesAsync(null, null, operationContext).Wait(),
                     "Fetching attributes of a block blob using a page blob reference should fail");
                 Assert.IsInstanceOfType(operationContext.LastResult.Exception.InnerException, typeof(InvalidOperationException));
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -340,7 +336,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -368,19 +364,19 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 blob.Metadata["key1"] = null;
 
                 Assert.ThrowsException<AggregateException>(
-                    () => blob.SetMetadataAsync(null, null, operationContext).AsTask().Wait(),
+                    () => blob.SetMetadataAsync(null, null, operationContext).Wait(),
                     "Metadata keys should have a non-null value");
                 Assert.IsInstanceOfType(operationContext.LastResult.Exception.InnerException, typeof(ArgumentException));
 
                 blob.Metadata["key1"] = "";
                 Assert.ThrowsException<AggregateException>(
-                    () => blob.SetMetadataAsync(null, null, operationContext).AsTask().Wait(),
+                    () => blob.SetMetadataAsync(null, null, operationContext).Wait(),
                     "Metadata keys should have a non-empty value");
                 Assert.IsInstanceOfType(operationContext.LastResult.Exception.InnerException, typeof(ArgumentException));
 
                 blob.Metadata["key1"] = " ";
                 Assert.ThrowsException<AggregateException>(
-                    () => blob.SetMetadataAsync(null, null, operationContext).AsTask().Wait(),
+                    () => blob.SetMetadataAsync(null, null, operationContext).Wait(),
                     "Metadata keys should have a non-whitespace only value");
                 Assert.IsInstanceOfType(operationContext.LastResult.Exception.InnerException, typeof(ArgumentException));
 
@@ -404,7 +400,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -432,7 +428,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                     {
                         using (MemoryStream memoryStream = new MemoryStream(buffer))
                         {
-                            await blob.PutBlockAsync(block, memoryStream.AsInputStream(), null);
+                            await blob.PutBlockAsync(block, memoryStream, null);
                         }
                         wholeBlob.Write(buffer, 0, buffer.Length);
                     }
@@ -440,7 +436,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                     {
                         using (MemoryStream memoryStream = new MemoryStream(buffer))
                         {
-                            await blob.PutBlockAsync(block, memoryStream.AsInputStream(), null);
+                            await blob.PutBlockAsync(block, memoryStream, null);
                         }
                     }
 
@@ -457,7 +453,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -482,7 +478,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 {
                     using (MemoryStream memoryStream = new MemoryStream(buffer))
                     {
-                        await blob.PutBlockAsync(block, memoryStream.AsInputStream(), null);
+                        await blob.PutBlockAsync(block, memoryStream, null);
                     }
                 }
                 await blob.PutBlockListAsync(blocks);
@@ -491,7 +487,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 {
                     using (MemoryStream memoryStream = new MemoryStream(buffer))
                     {
-                        await blob.PutBlockAsync(block, memoryStream.AsInputStream(), null);
+                        await blob.PutBlockAsync(block, memoryStream, null);
                     }
                 }
 
@@ -524,7 +520,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -550,13 +546,13 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 using (MemoryStream stream = new MemoryStream())
                 {
                     await TestHelper.ExpectedExceptionAsync<ArgumentException>(
-                        async () => await blob.UploadFromStreamAsync(stream.AsInputStream(), null, options, null),
+                        async () => await blob.UploadFromStreamAsync(stream, null, options, null),
                         "Single put blob with mismatching MD5 options should fail immediately");
                 }
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -609,7 +605,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -632,7 +628,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -655,7 +651,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -691,7 +687,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -727,7 +723,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -761,7 +757,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -783,7 +779,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -828,7 +824,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                             ParallelOperationThreadCount = 2
                         };
                         OperationContext context = new OperationContext();
-                        await blob.UploadFromStreamAsync(sourceStream.AsInputStream(), null /* accessCondition */, options, context);
+                        await blob.UploadFromStreamAsync(sourceStream, null /* accessCondition */, options, context);
 
                         // Number or requests should be at least 21 since StreamWriteSizeInBytes is 1 MB
                         Assert.IsTrue(context.RequestResults.Count >= 21);
@@ -841,7 +837,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                             ParallelOperationThreadCount = 1
                         };
                         context = new OperationContext();
-                        await blob2.UploadFromStreamAsync(sourceStream.AsInputStream(), null /* accessCondition */, options, context);
+                        await blob2.UploadFromStreamAsync(sourceStream, null /* accessCondition */, options, context);
 
                         // Number or requests should be at least 21 since StreamWriteSizeInBytes is 1 MB
                         Assert.IsTrue(context.RequestResults.Count >= 21);
@@ -854,7 +850,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                             ParallelOperationThreadCount = 1
                         };
                         context = new OperationContext();
-                        await blob3.UploadFromStreamAsync(sourceStream.AsInputStream(), null /* accessCondition */, options, context);
+                        await blob3.UploadFromStreamAsync(sourceStream, null /* accessCondition */, options, context);
 
                         // Number or requests should 1, or 2 if there is a retry
                         Assert.IsTrue(context.RequestResults.Count <= 2);
@@ -863,7 +859,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteAsync().AsTask().Wait();
+                container.DeleteAsync().Wait();
             }
         }
 
@@ -874,7 +870,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             string md5 = string.Empty;
             if (testMd5)
             {
-#if ASPNET_K
+#if NETCORE
                 MD5 hasher = MD5.Create();
                 md5 = Convert.ToBase64String(hasher.ComputeHash(buffer, startOffset, copyLength.HasValue ? (int)copyLength : buffer.Length - startOffset));
 #else
@@ -914,11 +910,11 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                     };
                     if (copyLength.HasValue)
                     {
-                        await blob.UploadFromStreamAsync(sourceStream.AsInputStream(), copyLength.Value, accessCondition, options, operationContext); 
+                        await blob.UploadFromStreamAsync(sourceStream, copyLength.Value, accessCondition, options, operationContext); 
                     }
                     else
                     {
-                        await blob.UploadFromStreamAsync(sourceStream.AsInputStream(), accessCondition, options, operationContext);
+                        await blob.UploadFromStreamAsync(sourceStream, accessCondition, options, operationContext);
                     }
                 }
                 
@@ -957,7 +953,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
 
                 MemoryStream originalData = new MemoryStream(GetRandomBuffer(1024));
                 CloudBlockBlob blob = container.GetBlockBlobReference("blob1");
-                await blob.UploadFromStreamAsync(originalData.AsInputStream());
+                await blob.UploadFromStreamAsync(originalData);
 
                 Assert.IsFalse(blob.IsSnapshot);
                 Assert.IsNull(blob.SnapshotTime, "Root blob has SnapshotTime set");
@@ -997,7 +993,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                     async () => await snapshot1.OpenWriteAsync(),
                     "Trying to write to a blob snapshot should fail");
 
-                using (Stream snapshotStream = (await snapshot1.OpenReadAsync()).AsStreamForRead())
+                using (Stream snapshotStream = (await snapshot1.OpenReadAsync()))
                 {
                     snapshotStream.Seek(0, SeekOrigin.End);
                     TestHelper.AssertStreamsAreEqual(originalData, snapshotStream);
@@ -1006,7 +1002,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 await blob.PutBlockListAsync(new List<string>());
                 await blob.FetchAttributesAsync();
 
-                using (Stream snapshotStream = (await snapshot1.OpenReadAsync()).AsStreamForRead())
+                using (Stream snapshotStream = (await snapshot1.OpenReadAsync()))
                 {
                     snapshotStream.Seek(0, SeekOrigin.End);
                     TestHelper.AssertStreamsAreEqual(originalData, snapshotStream);
@@ -1022,7 +1018,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -1066,7 +1062,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -1180,7 +1176,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -1205,7 +1201,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 using (MemoryStream stream = new MemoryStream(buffer))
                 {
                     await TestHelper.ExpectedExceptionAsync(
-                        async () => await blob.PutBlockAsync(blockId, stream.AsInputStream(), null, null, null, operationContext),
+                        async () => await blob.PutBlockAsync(blockId, stream, null, null, null, operationContext),
                         operationContext,
                         "Trying to upload a block with zero bytes should fail",
                         HttpStatusCode.BadRequest);
@@ -1214,20 +1210,20 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 buffer = new byte[1];
                 using (MemoryStream stream = new MemoryStream(buffer))
                 {
-                    await blob.PutBlockAsync(blockId, stream.AsInputStream(), null);
+                    await blob.PutBlockAsync(blockId, stream, null);
                 }
 
                 buffer = new byte[4 * 1024 * 1024];
                 using (MemoryStream stream = new MemoryStream(buffer))
                 {
-                    await blob.PutBlockAsync(blockId, stream.AsInputStream(), null);
+                    await blob.PutBlockAsync(blockId, stream, null);
                 }
 
                 buffer = new byte[4 * 1024 * 1024 + 1];
                 using (MemoryStream stream = new MemoryStream(buffer))
                 {
                     await TestHelper.ExpectedExceptionAsync(
-                        async () => await blob.PutBlockAsync(blockId, stream.AsInputStream(), null, null, null, operationContext),
+                        async () => await blob.PutBlockAsync(blockId, stream, null, null, null, operationContext),
                         operationContext,
                         "Trying to upload a block with more than 4MB should fail",
                         HttpStatusCode.RequestEntityTooLarge);
@@ -1235,7 +1231,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -1248,7 +1244,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
         public async Task CloudBlockBlobPutBlockAsync()
         {
             byte[] buffer = GetRandomBuffer(4 * 1024 * 1024);
-#if ASPNET_K
+#if NETCORE
             MD5 md5 = MD5.Create();
             string contentMD5 = Convert.ToBase64String(md5.ComputeHash(buffer));
 #else
@@ -1270,21 +1266,21 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                     using (MemoryStream memoryStream = new MemoryStream(buffer))
                     {
                         memoryStream.Seek(0, SeekOrigin.Begin);
-                        await blob.PutBlockAsync(blockList[0], memoryStream.AsInputStream(), contentMD5);
+                        await blob.PutBlockAsync(blockList[0], memoryStream, contentMD5);
                         resultingData.Write(buffer, 0, buffer.Length);
 
                         int offset = buffer.Length - 1024;
                         memoryStream.Seek(offset, SeekOrigin.Begin);
                         OperationContext opContext = new OperationContext();
                         await TestHelper.ExpectedExceptionAsync(
-                            async () => await blob.PutBlockAsync(blockList[1], memoryStream.AsInputStream(), contentMD5, null, null, opContext),
+                            async () => await blob.PutBlockAsync(blockList[1], memoryStream, contentMD5, null, null, opContext),
                             opContext,
                             "Invalid MD5 should fail with mismatch",
                             HttpStatusCode.BadRequest,
                             "Md5Mismatch");
 
                         memoryStream.Seek(offset, SeekOrigin.Begin);
-                        await blob.PutBlockAsync(blockList[1], memoryStream.AsInputStream(), null);
+                        await blob.PutBlockAsync(blockList[1], memoryStream, null);
                         resultingData.Write(buffer, offset, buffer.Length - offset);
                     }
 
@@ -1292,7 +1288,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
 
                     using (MemoryStream blobData = new MemoryStream())
                     {
-                        await blob.DownloadToStreamAsync(blobData.AsOutputStream());
+                        await blob.DownloadToStreamAsync(blobData);
                         Assert.AreEqual(resultingData.Length, blobData.Length);
                         Assert.IsTrue(blobData.ToArray().SequenceEqual(resultingData.ToArray()));
                     }
@@ -1300,7 +1296,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -1326,7 +1322,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                 using (MemoryStream stream = new MemoryStream(buffer))
                 {
                     await TestHelper.ExpectedExceptionAsync(
-                        async () => await blob.PutBlockAsync(blockList.First(), stream.AsInputStream(), null, null, null, operationContext),
+                        async () => await blob.PutBlockAsync(blockList.First(), stream, null, null, null, operationContext),
                         operationContext,
                         "Block operations should fail on page blobs",
                         HttpStatusCode.Conflict,
@@ -1349,7 +1345,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -1375,7 +1371,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
                     byte[] buffer = Encoding.UTF8.GetBytes(i.ToString());
                     using (MemoryStream stream = new MemoryStream(buffer))
                     {
-                        await blob.PutBlockAsync(blockIds[i], stream.AsInputStream(), null);
+                        await blob.PutBlockAsync(blockIds[i], stream, null);
                     }
                     blocks.Add(buffer);
                 }
@@ -1396,7 +1392,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
 
                 using (MemoryStream stream = new MemoryStream(blocks[9]))
                 {
-                    await blob.PutBlockAsync(originalBlockIds[9], stream.AsInputStream(), null);
+                    await blob.PutBlockAsync(originalBlockIds[9], stream, null);
                 }
                 blockIds.Insert(0, originalBlockIds[9]);
                 await blob.PutBlockListAsync(blockIds);
@@ -1404,7 +1400,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
 
                 using (MemoryStream stream = new MemoryStream(blocks[0]))
                 {
-                    await blob.PutBlockAsync(originalBlockIds[0], stream.AsInputStream(), null);
+                    await blob.PutBlockAsync(originalBlockIds[0], stream, null);
                 }
                 blockIds.Add(originalBlockIds[0]);
                 await blob.PutBlockListAsync(blockIds);
@@ -1412,7 +1408,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
 
                 using (MemoryStream stream = new MemoryStream(blocks[4]))
                 {
-                    await blob.PutBlockAsync(originalBlockIds[4], stream.AsInputStream(), null);
+                    await blob.PutBlockAsync(originalBlockIds[4], stream, null);
                 }
                 blockIds.Insert(2, originalBlockIds[4]);
                 await blob.PutBlockListAsync(blockIds);
@@ -1424,7 +1420,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -1448,7 +1444,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
 
                 using (MemoryStream stream = new MemoryStream())
                 {
-                    await blob.UploadFromStreamAsync(stream.AsInputStream());
+                    await blob.UploadFromStreamAsync(stream);
                 }
 
                 await TestHelper.ExpectedExceptionAsync<ArgumentNullException>(
@@ -1457,13 +1453,13 @@ namespace Microsoft.WindowsAzure.Storage.Blob
 
                 using (MemoryStream stream = new MemoryStream())
                 {
-                    await blob.DownloadToStreamAsync(stream.AsOutputStream());
+                    await blob.DownloadToStreamAsync(stream);
                     Assert.AreEqual(0, stream.Length);
                 }
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -1521,7 +1517,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
 
@@ -1571,7 +1567,7 @@ namespace Microsoft.WindowsAzure.Storage.Blob
             }
             finally
             {
-                container.DeleteIfExistsAsync().AsTask().Wait();
+                container.DeleteIfExistsAsync().Wait();
             }
         }
     }
